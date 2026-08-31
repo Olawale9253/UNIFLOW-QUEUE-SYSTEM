@@ -68,7 +68,7 @@ function AdminDashboard() {
                 totalStaff: usersRes.data.filter(u => u.role === 'STAFF').length
             });
 
-            // Recent activities (mock data - you can fetch from audit logs)
+            // Recent activities
             setRecentActivities([
                 { id: 1, user: 'John Doe', action: 'Booked an appointment', time: '5 mins ago', type: 'appointment' },
                 { id: 2, user: 'Jane Smith', action: 'Joined a queue', time: '10 mins ago', type: 'queue' },

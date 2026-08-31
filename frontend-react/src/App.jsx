@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { AdminProvider } from './context/AdminContext';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -17,6 +18,27 @@ import Documents from './pages/Documents';
 import Offices from './pages/Offices';
 import Profile from './pages/Profile';
 import Navbar from './components/common/Navbar';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminOffices from './pages/admin/AdminOffices';
+
+
+// Admin route wrapper
+function AdminRoute({ children }) {
+    const { user, loading } = useAuth();
+
+    if (loading) {
+        return <div className="text-center py-8">Loading...</div>;
+    }
+
+    if (!user || user.role !== 'ADMIN') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return children;
+}
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
@@ -43,49 +65,71 @@ function App() {
         <Router>
             <ThemeProvider>
                 <AuthProvider>
-                    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-                        <Navbar />
-                        <main>
-                            <Routes>
-                                <Route path="/" element={<LandingPage />} />
-                                <Route path="/login" element={<Login />} />
-                                <Route path="/register" element={<Register />} />
-                                <Route path="/forgot-password" element={<ForgotPassword />} />
-                                <Route path="/reset-password" element={<ResetPassword />} />
-                                <Route path="/dashboard" element={
-                                    <ProtectedRoute>
-                                        <Dashboard />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/queue" element={
-                                    <ProtectedRoute>
-                                        <Queue />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/appointments" element={
-                                    <ProtectedRoute>
-                                        <Appointments />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/documents" element={
-                                    <ProtectedRoute>
-                                        <Documents />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/offices" element={
-                                    <ProtectedRoute>
-                                        <Offices />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/profile" element={
-                                    <ProtectedRoute>
-                                        <Profile />
-                                    </ProtectedRoute>
-                                } />
-                            </Routes>
-                        </main>
-                        <Toaster position="top-right" />
-                    </div>
+                    <AdminProvider>
+                        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+                            <Navbar />
+                            <main>
+                                <Routes>
+                                    <Route path="/" element={<LandingPage />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
+                                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                                    <Route path="/reset-password" element={<ResetPassword />} />
+
+                                    {/* Admin Routes */}
+                                    <Route path="/admin" element={
+                                        <AdminRoute>
+                                            <AdminDashboard />
+                                        </AdminRoute>
+                                    } />
+
+                                    <Route path="/admin/offices" element={
+                                        <AdminRoute>
+                                            <AdminOffices />
+                                        </AdminRoute>
+                                    } />
+                                    <Route path="/admin/users" element={
+                                        <AdminRoute>
+                                            <AdminUsers />
+                                        </AdminRoute>
+                                    } />
+
+                                    {/* Protected Routes */}
+                                    <Route path="/dashboard" element={
+                                        <ProtectedRoute>
+                                            <Dashboard />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/queue" element={
+                                        <ProtectedRoute>
+                                            <Queue />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/appointments" element={
+                                        <ProtectedRoute>
+                                            <Appointments />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/documents" element={
+                                        <ProtectedRoute>
+                                            <Documents />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/offices" element={
+                                        <ProtectedRoute>
+                                            <Offices />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/profile" element={
+                                        <ProtectedRoute>
+                                            <Profile />
+                                        </ProtectedRoute>
+                                    } />
+                                </Routes>
+                            </main>
+                            <Toaster position="top-right" />
+                        </div>
+                    </AdminProvider>
                 </AuthProvider>
             </ThemeProvider>
         </Router>

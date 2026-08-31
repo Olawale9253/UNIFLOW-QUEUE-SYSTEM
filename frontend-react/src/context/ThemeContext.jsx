@@ -3,10 +3,8 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-    const [darkMode, setDarkMode] = useState(() => {
-        const saved = localStorage.getItem('theme');
-        return saved === 'dark' ? true : false;
-    });
+    // Default to light mode (false = light mode)
+    const [darkMode, setDarkMode] = useState(false);
 
     useEffect(() => {
         if (darkMode) {

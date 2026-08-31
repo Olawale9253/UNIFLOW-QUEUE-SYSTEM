@@ -31,7 +31,6 @@ function Appointments() {
             ]);
             setAppointments(appointmentsRes.data);
 
-            // Remove duplicate offices by using a Map
             const uniqueOffices = Array.from(
                 new Map(officesRes.data.map(office => [office.id, office])).values()
             );
@@ -54,7 +53,6 @@ function Appointments() {
         if (officeId) {
             try {
                 const response = await api.get(`/offices/${officeId}/services`);
-                // Remove duplicate services
                 const uniqueServices = Array.from(
                     new Map(response.data.map(service => [service.id, service])).values()
                 );
@@ -158,24 +156,43 @@ function Appointments() {
         });
     };
 
+    const getStatusBadge = (status) => {
+        const badges = {
+            'PENDING': 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300',
+            'CONFIRMED': 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300',
+            'CANCELLED': 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300',
+            'COMPLETED': 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300',
+            'RESCHEDULED': 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300'
+        };
+        return badges[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+    };
+
     if (loading) {
-        return <div className="text-center py-8">Loading...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading appointments...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-8">Appointments</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Appointments</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4">Book Appointment</h2>
+                {/* Book Appointment Form */}
+                <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Book Appointment</h2>
                     <form onSubmit={handleBookAppointment}>
                         <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2">Office</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Office</label>
                             <select
                                 value={selectedOffice}
                                 onChange={handleOfficeChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                 required
                             >
                                 <option value="">Select Office</option>
@@ -185,11 +202,11 @@ function Appointments() {
                             </select>
                         </div>
                         <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2">Service</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Service</label>
                             <select
                                 value={selectedService}
                                 onChange={(e) => setSelectedService(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                 required
                                 disabled={!selectedOffice}
                             >
@@ -200,22 +217,22 @@ function Appointments() {
                             </select>
                         </div>
                         <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2">Date</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Date</label>
                             <input
                                 type="date"
                                 value={selectedDate}
                                 onChange={handleDateChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                 required
                                 min={new Date().toISOString().split('T')[0]}
                             />
                         </div>
                         <div className="mb-4">
-                            <label className="block text-gray-700 text-sm font-bold mb-2">Time</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Time</label>
                             <select
                                 value={selectedTime}
                                 onChange={(e) => setSelectedTime(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                 required
                                 disabled={availableSlots.length === 0 || fetchingSlots}
                             >
@@ -227,15 +244,15 @@ function Appointments() {
                                 ))}
                             </select>
                             {fetchingSlots && (
-                                <p className="text-sm text-blue-600 mt-1">Loading available slots...</p>
+                                <p className="text-sm text-blue-600 dark:text-blue-400 mt-1">Loading available slots...</p>
                             )}
                             {!fetchingSlots && availableSlots.length === 0 && selectedOffice && selectedDate && (
-                                <p className="text-sm text-yellow-600 mt-1">No available slots for this date</p>
+                                <p className="text-sm text-yellow-600 dark:text-yellow-400 mt-1">No available slots for this date</p>
                             )}
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                            className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
                             disabled={!selectedOffice || !selectedService || !selectedTime}
                         >
                             Book Appointment
@@ -243,37 +260,32 @@ function Appointments() {
                     </form>
                 </div>
 
-                <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
-                    <h2 className="text-xl font-semibold mb-4">My Appointments</h2>
+                {/* My Appointments */}
+                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">My Appointments</h2>
                     {appointments.length === 0 ? (
-                        <p className="text-gray-500">No appointments booked</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center py-8">No appointments booked</p>
                     ) : (
                         <div className="space-y-3">
                             {appointments.map((appointment) => (
-                                <div key={appointment.id} className="border rounded-lg p-4">
+                                <div key={appointment.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div className="flex justify-between items-start">
                                         <div>
-                                            <p className="font-semibold">{appointment.officeName}</p>
-                                            <p className="text-sm text-gray-600">{appointment.serviceName}</p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="font-semibold text-gray-900 dark:text-white">{appointment.officeName}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.serviceName}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                                 {formatDateTime(appointment.appointmentTime)}
                                             </p>
-                                            <p className="text-sm text-gray-600">Reference: {appointment.referenceNumber}</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400">Reference: {appointment.referenceNumber}</p>
                                         </div>
                                         <div className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm ${
-                          appointment.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                              appointment.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                                  appointment.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                                      appointment.status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
-                                          'bg-gray-100 text-gray-800'
-                      }`}>
+                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadge(appointment.status)}`}>
                         {appointment.status}
                       </span>
                                             {appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && (
                                                 <button
                                                     onClick={() => handleCancelAppointment(appointment.id)}
-                                                    className="block mt-2 text-sm text-red-600 hover:text-red-800"
+                                                    className="block mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                                                 >
                                                     Cancel
                                                 </button>
