@@ -16,7 +16,7 @@ function Login() {
     try {
       await login({ email, password });
       toast.success('Login successful!');
-      navigate('/');
+      navigate('/dashboard');  // Changed from '/' to '/dashboard'
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
     } finally {
@@ -28,7 +28,9 @@ function Login() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-blue-600">UniFlow</h1>
+            <Link to="/">
+              <h1 className="text-3xl font-bold text-blue-600">UniFlow</h1>
+            </Link>
             <p className="text-gray-600 mt-2">Sign in to your account</p>
           </div>
 
