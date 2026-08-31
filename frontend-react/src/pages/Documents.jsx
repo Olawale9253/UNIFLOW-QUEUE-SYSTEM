@@ -33,7 +33,12 @@ function Documents() {
                 api.get('/offices/active')
             ]);
             setDocuments(documentsRes.data);
-            setOffices(officesRes.data);
+
+            // Remove duplicate offices
+            const uniqueOffices = Array.from(
+                new Map(officesRes.data.map(office => [office.id, office])).values()
+            );
+            setOffices(uniqueOffices);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -60,6 +65,7 @@ function Documents() {
             setDocumentType('');
             setComments('');
         } catch (error) {
+            console.error('Error:', error);
             toast.error(error.response?.data?.message || 'Failed to request document');
         }
     };
@@ -102,7 +108,6 @@ function Documents() {
             <h1 className="text-3xl font-bold mb-8">Document Requests</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Request Document */}
                 <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold mb-4">Request Document</h2>
                     <form onSubmit={handleSubmit}>
@@ -153,7 +158,6 @@ function Documents() {
                     </form>
                 </div>
 
-                {/* My Documents */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                         <h2 className="text-xl font-semibold mb-4">Track Document</h2>

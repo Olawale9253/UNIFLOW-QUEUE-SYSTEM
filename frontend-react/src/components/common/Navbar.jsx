@@ -1,17 +1,25 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
     toast.success('Logged out successfully');
     navigate('/login');
   };
+
+  // Hide navbar on login and register pages
+  const hideNavbar = location.pathname === '/login' || location.pathname === '/register' || location.pathname === '/forgot-password';
+
+  if (hideNavbar) {
+    return null;
+  }
 
   return (
       <nav className="bg-white shadow-md">

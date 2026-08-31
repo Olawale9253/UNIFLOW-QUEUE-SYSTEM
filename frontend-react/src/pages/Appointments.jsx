@@ -15,7 +15,6 @@ function Appointments() {
     const [fetchingSlots, setFetchingSlots] = useState(false);
 
     useEffect(() => {
-        // Set default date to tomorrow
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const dateStr = tomorrow.toISOString().split('T')[0];
@@ -31,7 +30,12 @@ function Appointments() {
                 api.get('/offices/active')
             ]);
             setAppointments(appointmentsRes.data);
-            setOffices(officesRes.data);
+
+            // Remove duplicate offices by using a Map
+            const uniqueOffices = Array.from(
+                new Map(officesRes.data.map(office => [office.id, office])).values()
+            );
+            setOffices(uniqueOffices);
         } catch (error) {
             console.error('Error fetching data:', error);
             toast.error('Failed to load data');
@@ -50,8 +54,11 @@ function Appointments() {
         if (officeId) {
             try {
                 const response = await api.get(`/offices/${officeId}/services`);
-                setServices(response.data);
-                // Fetch available slots for the selected date
+                // Remove duplicate services
+                const uniqueServices = Array.from(
+                    new Map(response.data.map(service => [service.id, service])).values()
+                );
+                setServices(uniqueServices);
                 if (selectedDate) {
                     await fetchAvailableSlots(officeId, selectedDate);
                 }
@@ -78,24 +85,13 @@ function Appointments() {
     const fetchAvailableSlots = async (officeId, date) => {
         setFetchingSlots(true);
         try {
-            // Ensure date is in correct format YYYY-MM-DD
             const formattedDate = date.split('T')[0];
-            console.log('Fetching slots for office:', officeId, 'date:', formattedDate);
-
-            // Use the endpoint with query parameter
             const response = await api.get(`/appointments/available-slots/${officeId}`, {
                 params: { date: formattedDate }
             });
-
-            console.log('Available slots response:', response.data);
             setAvailableSlots(response.data);
-
-            if (response.data.length === 0) {
-                toast.info('No available slots for this date');
-            }
         } catch (error) {
             console.error('Error fetching slots:', error);
-            console.error('Error response:', error.response);
             toast.error('Failed to load available slots');
             setAvailableSlots([]);
         } finally {
@@ -112,11 +108,9 @@ function Appointments() {
         }
 
         try {
-            // Format: YYYY-MM-DDTHH:mm:ss
             const appointmentDateTime = `${selectedDate}T${selectedTime}:00`;
-            console.log('Booking appointment at:', appointmentDateTime);
 
-            const response = await api.post('/appointments/book', {
+            await api.post('/appointments/book', {
                 officeId: parseInt(selectedOffice),
                 serviceId: parseInt(selectedService),
                 appointmentTime: appointmentDateTime
@@ -128,7 +122,6 @@ function Appointments() {
             setAvailableSlots([]);
         } catch (error) {
             console.error('Booking error:', error);
-            console.error('Error response:', error.response);
             toast.error(error.response?.data?.message || 'Failed to book appointment');
         }
     };
@@ -174,7 +167,6 @@ function Appointments() {
             <h1 className="text-3xl font-bold mb-8">Appointments</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Book Appointment Form */}
                 <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold mb-4">Book Appointment</h2>
                     <form onSubmit={handleBookAppointment}>
@@ -251,7 +243,6 @@ function Appointments() {
                     </form>
                 </div>
 
-                {/* My Appointments */}
                 <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold mb-4">My Appointments</h2>
                     {appointments.length === 0 ? (

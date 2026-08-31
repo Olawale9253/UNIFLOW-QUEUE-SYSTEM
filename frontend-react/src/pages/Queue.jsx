@@ -22,7 +22,12 @@ function Queue() {
                 api.get('/queues/my-tickets'),
                 api.get('/queues/live/all')
             ]);
-            setOffices(officesRes.data);
+
+            // Remove duplicate offices
+            const uniqueOffices = Array.from(
+                new Map(officesRes.data.map(office => [office.id, office])).values()
+            );
+            setOffices(uniqueOffices);
             setMyTickets(ticketsRes.data);
             setLiveQueues(liveQueuesRes.data);
         } catch (error) {
@@ -39,7 +44,11 @@ function Queue() {
         if (officeId) {
             try {
                 const response = await api.get(`/offices/${officeId}/services`);
-                setServices(response.data);
+                // Remove duplicate services
+                const uniqueServices = Array.from(
+                    new Map(response.data.map(service => [service.id, service])).values()
+                );
+                setServices(uniqueServices);
             } catch (error) {
                 console.error('Error fetching services:', error);
             }
@@ -86,7 +95,6 @@ function Queue() {
             <h1 className="text-3xl font-bold mb-8">Queue Management</h1>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Join Queue Form */}
                 <div className="lg:col-span-1 bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold mb-4">Join Queue</h2>
                     <form onSubmit={handleJoinQueue}>
@@ -128,7 +136,6 @@ function Queue() {
                     </form>
                 </div>
 
-                {/* My Tickets */}
                 <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
                     <h2 className="text-xl font-semibold mb-4">My Queue Tickets</h2>
                     {myTickets.length === 0 ? (
@@ -155,7 +162,6 @@ function Queue() {
                 </div>
             </div>
 
-            {/* Live Queues */}
             <div className="mt-8 bg-white rounded-lg shadow-md p-6">
                 <h2 className="text-xl font-semibold mb-4">Live Queues</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
