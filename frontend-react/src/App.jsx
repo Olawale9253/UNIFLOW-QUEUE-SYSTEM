@@ -5,6 +5,11 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdminProvider } from './context/AdminContext';
 
+// Route Guards
+import ProtectedRoute from './components/common/ProtectedRoute';
+import AdminRoute from './components/common/AdminRoute';
+import AdminStaff from './pages/admin/AdminStaff';
+
 // Pages
 import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
@@ -24,42 +29,6 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
 import AdminOffices from './pages/admin/AdminOffices';
 
-
-// Admin route wrapper
-function AdminRoute({ children }) {
-    const { user, loading } = useAuth();
-
-    if (loading) {
-        return <div className="text-center py-8">Loading...</div>;
-    }
-
-    if (!user || user.role !== 'ADMIN') {
-        return <Navigate to="/dashboard" replace />;
-    }
-
-    return children;
-}
-
-// Protected route wrapper
-function ProtectedRoute({ children }) {
-    const { user, loading } = useAuth();
-
-    if (loading) {
-        return <div className="flex items-center justify-center min-h-screen">
-            <div className="text-center">
-                <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-                <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
-            </div>
-        </div>;
-    }
-
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-
-    return children;
-}
-
 function App() {
     return (
         <Router>
@@ -70,22 +39,23 @@ function App() {
                             <Navbar />
                             <main>
                                 <Routes>
+                                    {/* Public Routes */}
                                     <Route path="/" element={<LandingPage />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
                                     <Route path="/forgot-password" element={<ForgotPassword />} />
                                     <Route path="/reset-password" element={<ResetPassword />} />
 
-                                    {/* Admin Routes */}
+                                    {/* Admin Routes - These have their own layout */}
                                     <Route path="/admin" element={
                                         <AdminRoute>
                                             <AdminDashboard />
                                         </AdminRoute>
                                     } />
 
-                                    <Route path="/admin/offices" element={
+                                    <Route path="/admin/staff" element={
                                         <AdminRoute>
-                                            <AdminOffices />
+                                            <AdminStaff />
                                         </AdminRoute>
                                     } />
                                     <Route path="/admin/users" element={
@@ -93,8 +63,13 @@ function App() {
                                             <AdminUsers />
                                         </AdminRoute>
                                     } />
+                                    <Route path="/admin/offices" element={
+                                        <AdminRoute>
+                                            <AdminOffices />
+                                        </AdminRoute>
+                                    } />
 
-                                    {/* Protected Routes */}
+                                    {/* User Routes */}
                                     <Route path="/dashboard" element={
                                         <ProtectedRoute>
                                             <Dashboard />
@@ -125,9 +100,21 @@ function App() {
                                             <Profile />
                                         </ProtectedRoute>
                                     } />
+
+                                    {/* Catch all */}
+                                    <Route path="*" element={<Navigate to="/" replace />} />
                                 </Routes>
                             </main>
-                            <Toaster position="top-right" />
+                            <Toaster
+                                position="top-right"
+                                toastOptions={{
+                                    duration: 4000,
+                                    style: {
+                                        background: '#363636',
+                                        color: '#fff',
+                                    },
+                                }}
+                            />
                         </div>
                     </AdminProvider>
                 </AuthProvider>

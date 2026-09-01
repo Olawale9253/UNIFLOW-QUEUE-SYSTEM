@@ -16,8 +16,20 @@ function Navbar() {
     navigate('/login');
   };
 
-  // Hide navbar on landing page, login, register, and forgot password pages
-  const hideNavbar = ['/', '/login', '/register', '/forgot-password'].includes(location.pathname);
+  // Hide navbar on landing page, login, register, forgot password, AND admin pages
+  const hideNavbar = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/admin',
+    '/admin/users',
+    '/admin/offices',
+    '/admin/staff',
+    '/admin/appointments',
+    '/admin/reports',
+    '/admin/settings'
+  ].includes(location.pathname);
 
   if (hideNavbar) {
     return null;
@@ -75,30 +87,17 @@ function Navbar() {
                     )}
                   </button>
 
-
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                      {getInitials()}
-                    </div>
-                    <span className="text-sm text-gray-700 dark:text-gray-300 hidden sm:inline">
-    {user?.fullName || 'Profile'}
-  </span>
-                    <span className={`text-xs px-2 py-0.5 rounded-full ${
-                        user?.role === 'ADMIN' ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400' :
-                            user?.role === 'STAFF' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
-                                'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400'
-                    }`}>
-    {user?.role || 'USER'}
-  </span>
-                  </div>
-                  <Link to="/profile" className="flex items-center space-x-1 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
+                  {/* Profile Avatar */}
+                  <Link to="/profile" className="flex items-center text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                       {getInitials()}
                     </div>
                   </Link>
+
+                  {/* Logout Button */}
                   <button
                       onClick={handleLogout}
-                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm"
+                      className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
                   >
                     Logout
                   </button>

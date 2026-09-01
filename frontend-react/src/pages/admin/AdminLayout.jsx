@@ -17,7 +17,9 @@ function AdminLayout({ children }) {
     };
 
     const isActive = (path) => {
-        return location.pathname === path ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
+        return location.pathname === path
+            ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
+            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700';
     };
 
     const menuItems = [
@@ -58,20 +60,19 @@ function AdminLayout({ children }) {
                             <button
                                 onClick={toggleDarkMode}
                                 className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                                aria-label="Toggle dark mode"
                             >
                                 {darkMode ? '☀️' : '🌙'}
                             </button>
                             <Link to="/dashboard" className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400">
                                 View Site
                             </Link>
-                            <div className="flex items-center space-x-2">
-                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
-                                    {user?.fullName ? user.fullName.charAt(0).toUpperCase() : 'A'}
-                                </div>
-                                <button onClick={handleLogout} className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm">
-                                    Logout
-                                </button>
-                            </div>
+                            <button
+                                onClick={handleLogout}
+                                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm font-medium"
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
                 </div>

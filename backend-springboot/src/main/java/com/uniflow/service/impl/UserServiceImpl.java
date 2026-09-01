@@ -1,6 +1,7 @@
 package com.uniflow.service.impl;
 
 import com.uniflow.dto.response.UserResponse;
+import com.uniflow.exception.BadRequestException;
 import com.uniflow.exception.ResourceNotFoundException;
 import com.uniflow.model.User;
 import com.uniflow.repository.UserRepository;
@@ -8,6 +9,7 @@ import com.uniflow.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +20,46 @@ public class UserServiceImpl implements UserService {
 
     public UserServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUserRole(Long userId, String newRole) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        // Validate role
+        if (!Arrays.asList("STUDENT", "STAFF", "ADMIN").contains(newRole)) {
+            throw new BadRequestException("Invalid role: " + newRole);
+        }
+
+        user.setRole(newRole);
+        User updatedUser = userRepository.save(user);
+        return mapToUserResponse(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateUser(Long userId, String fullName, String phone, String email) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (fullName != null && !fullName.isEmpty()) {
+            user.setFullName(fullName);
+        }
+        if (phone != null) {
+            user.setPhone(phone);
+        }
+        if (email != null && !email.isEmpty()) {
+            // Check if email is already taken by another user
+            if (!user.getEmail().equals(email) && userRepository.existsByEmail(email)) {
+                throw new BadRequestException("Email is already taken");
+            }
+            user.setEmail(email);
+        }
+
+        User updatedUser = userRepository.save(user);
+        return mapToUserResponse(updatedUser);
     }
 
     @Override

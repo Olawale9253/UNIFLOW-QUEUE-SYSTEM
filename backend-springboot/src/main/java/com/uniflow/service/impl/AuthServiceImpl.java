@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -38,21 +39,31 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email is already registered");
         }
 
+        // Check if matriculation number already exists
         if (userRepository.existsByMatriculationNumber(request.getMatriculationNumber())) {
             throw new BadRequestException("Matriculation number is already registered");
         }
 
+        // Create new user
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setFullName(request.getFullName());
         user.setPhone(request.getPhone());
         user.setMatriculationNumber(request.getMatriculationNumber());
-        user.setRole("STUDENT");
+
+        // Set role - default to STUDENT if not provided
+        String role = request.getRole() != null ? request.getRole() : "STUDENT";
+        // Validate role
+        if (!Arrays.asList("STUDENT", "STAFF", "ADMIN").contains(role)) {
+            role = "STUDENT";
+        }
+        user.setRole(role);
         user.setActive(true);
 
         User savedUser = userRepository.save(user);
@@ -107,16 +118,13 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found with this email"));
 
-        // Generate reset token
         String resetToken = UUID.randomUUID().toString();
         user.setResetToken(resetToken);
         user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
         userRepository.save(user);
 
-        // Build reset link
         String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
 
-        // Print to console (for development)
         System.out.println("========================================");
         System.out.println("PASSWORD RESET REQUEST");
         System.out.println("Email: " + email);
@@ -124,12 +132,10 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("Reset Link: " + resetLink);
         System.out.println("========================================");
 
-        // Send email
         try {
             emailService.sendPasswordResetEmail(email, resetLink);
         } catch (Exception e) {
             System.err.println("Failed to send email: " + e.getMessage());
-            // Don't throw exception - user can still use the console link
         }
     }
 
@@ -155,7 +161,6 @@ public class AuthServiceImpl implements AuthService {
             throw new BadRequestException("Reset token has expired");
         }
 
-        // Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);

@@ -9,6 +9,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/users")
@@ -24,6 +25,29 @@ public class UserController {
     @GetMapping("/profile")
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserResponse response = userService.getUserProfile(userDetails.getId());
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{userId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUser(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        String fullName = request.get("fullName");
+        String phone = request.get("phone");
+        String email = request.get("email");
+
+        UserResponse response = userService.updateUser(userId, fullName, phone, email);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{userId}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> updateUserRole(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request) {
+        String newRole = request.get("role");
+        UserResponse response = userService.updateUserRole(userId, newRole);
         return ResponseEntity.ok(response);
     }
 

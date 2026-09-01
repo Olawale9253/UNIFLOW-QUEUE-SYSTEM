@@ -59,7 +59,7 @@ function Dashboard() {
     }
   };
 
-  // Get time-based greeting
+  // Update the getGreeting function
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) return 'Good Morning';

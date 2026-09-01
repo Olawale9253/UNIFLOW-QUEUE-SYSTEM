@@ -2,9 +2,10 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function AdminRoute({ children }) {
+function RoleRoute({ children, allowedRoles = [] }) {
     const { user, loading } = useAuth();
 
+    // Show loading spinner while checking authentication
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -16,15 +17,22 @@ function AdminRoute({ children }) {
         );
     }
 
+
     if (!user) {
         return <Navigate to="/login" replace />;
     }
 
-    if (user.role !== 'ADMIN') {
+    // If user's role is not in the allowed roles list
+    if (!allowedRoles.includes(user.role)) {
+        // Redirect admin to admin dashboard, others to user dashboard
+        if (user.role === 'ADMIN') {
+            return <Navigate to="/admin" replace />;
+        }
         return <Navigate to="/dashboard" replace />;
     }
 
+    // If user has the required role, render the children
     return children;
 }
 
-export default AdminRoute;
+export default RoleRoute;

@@ -49,19 +49,15 @@ function Profile() {
 
     const fetchStats = async () => {
         try {
-            // Get appointments count
             const appointmentsRes = await api.get('/appointments/my-appointments');
             const appointments = appointmentsRes.data || [];
 
-            // Get queue tickets count
             const ticketsRes = await api.get('/queues/my-tickets');
             const tickets = ticketsRes.data || [];
 
-            // Get documents count
             const documentsRes = await api.get('/documents/my-requests');
             const documents = documentsRes.data || [];
 
-            // Count completed items
             const completedAppointments = appointments.filter(a => a.status === 'COMPLETED').length;
             const completedTickets = tickets.filter(t => t.status === 'COMPLETED').length;
 
@@ -89,11 +85,9 @@ function Profile() {
             toast.success('Profile updated successfully');
             setEditMode(false);
 
-            // Update user in localStorage
             const updatedUser = { ...user, fullName: profile.fullName, phone: profile.phone };
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
-            // Refresh profile
             await fetchProfile();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to update profile');
@@ -109,7 +103,6 @@ function Profile() {
         });
     };
 
-    // Get initials for avatar
     const getInitials = () => {
         if (profile.fullName) {
             const names = profile.fullName.split(' ');
@@ -121,34 +114,57 @@ function Profile() {
         return 'U';
     };
 
+    const getRoleBadge = () => {
+        const colors = {
+            'ADMIN': 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300',
+            'STAFF': 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300',
+            'STUDENT': 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300'
+        };
+        return colors[profile.role] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+    };
+
     if (loading) {
-        return <div className="text-center py-8">Loading profile...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+                    <p className="mt-4 text-gray-600 dark:text-gray-400">Loading profile...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold">My Profile</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1>
                 {!editMode && (
                     <button
                         onClick={() => setEditMode(true)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
+                        className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
                     >
                         Edit Profile
                     </button>
                 )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8">
+                <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 px-6 py-8">
                     <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-3xl font-bold text-blue-600">
+                        <div className="w-20 h-20 bg-white dark:bg-gray-200 rounded-full flex items-center justify-center text-3xl font-bold text-blue-600 dark:text-blue-700">
                             {getInitials()}
                         </div>
                         <div>
                             <h2 className="text-2xl font-bold text-white">{profile.fullName || 'Student'}</h2>
-                            <p className="text-blue-100">{profile.role}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadge()}`}>
+                  {profile.role}
+                </span>
+                                <span className="px-3 py-1 bg-green-500/20 text-green-200 rounded-full text-xs font-medium">
+                  Active
+                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -156,50 +172,49 @@ function Profile() {
                 {/* Profile Content */}
                 <div className="p-6">
                     {editMode ? (
-                        // Edit Mode
                         <form onSubmit={handleUpdateProfile}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
                                     <input
                                         type="text"
                                         name="fullName"
                                         value={profile.fullName}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                         required
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Phone Number</label>
                                     <input
                                         type="tel"
                                         name="phone"
                                         value={profile.phone}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
                                         placeholder="08012345678"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
                                     <input
                                         type="email"
                                         value={profile.email}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
+                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
                                         disabled
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Matriculation Number</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Matriculation Number</label>
                                     <input
                                         type="text"
                                         value={profile.matriculationNumber}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 cursor-not-allowed"
+                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
                                         disabled
                                     />
-                                    <p className="text-xs text-gray-500 mt-1">Matriculation number cannot be changed</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Matriculation number cannot be changed</p>
                                 </div>
                             </div>
 
@@ -207,7 +222,7 @@ function Profile() {
                                 <button
                                     type="submit"
                                     disabled={updating}
-                                    className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                                    className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
                                 >
                                     {updating ? 'Saving...' : 'Save Changes'}
                                 </button>
@@ -217,73 +232,56 @@ function Profile() {
                                         setEditMode(false);
                                         fetchProfile();
                                     }}
-                                    className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+                                    className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
                                 >
                                     Cancel
                                 </button>
                             </div>
                         </form>
                     ) : (
-                        // View Mode
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Full Name</p>
-                                    <p className="text-lg font-medium">{profile.fullName || 'Not set'}</p>
+                                <div className="border-b dark:border-gray-700 pb-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Full Name</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.fullName || 'Not set'}</p>
                                 </div>
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Email</p>
-                                    <p className="text-lg font-medium">{profile.email}</p>
+                                <div className="border-b dark:border-gray-700 pb-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Email</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.email}</p>
                                 </div>
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Phone Number</p>
-                                    <p className="text-lg font-medium">{profile.phone || 'Not set'}</p>
+                                <div className="border-b dark:border-gray-700 pb-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.phone || 'Not set'}</p>
                                 </div>
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Matriculation Number</p>
-                                    <p className="text-lg font-medium">{profile.matriculationNumber}</p>
-                                </div>
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Role</p>
-                                    <p className="text-lg font-medium">
-                    <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                      {profile.role}
-                    </span>
-                                    </p>
-                                </div>
-                                <div className="border-b pb-4">
-                                    <p className="text-sm text-gray-500">Account Status</p>
-                                    <p className="text-lg font-medium">
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                      Active
-                    </span>
-                                    </p>
+                                <div className="border-b dark:border-gray-700 pb-4">
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Matriculation Number</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.matriculationNumber}</p>
                                 </div>
                             </div>
 
                             {/* Quick Stats with Real Data */}
-                            <div className="mt-8 pt-6 border-t">
-                                <h3 className="text-lg font-semibold mb-4">My Activities</h3>
+                            <div className="mt-8 pt-6 border-t dark:border-gray-700">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">My Activities</h3>
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                    <div className="bg-blue-50 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
-                                        <p className="text-2xl font-bold text-blue-600">{stats.appointments}</p>
-                                        <p className="text-sm text-gray-600">Appointments</p>
-                                        <p className="text-xs text-gray-400 mt-1">Total booked</p>
+                                    <div className="bg-blue-50 dark:bg-blue-900/30 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
+                                        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.appointments}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Appointments</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Total booked</p>
                                     </div>
-                                    <div className="bg-green-50 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
-                                        <p className="text-2xl font-bold text-green-600">{stats.queueTickets}</p>
-                                        <p className="text-sm text-gray-600">Queue Tickets</p>
-                                        <p className="text-xs text-gray-400 mt-1">Active tickets</p>
+                                    <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
+                                        <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.queueTickets}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Queue Tickets</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Active tickets</p>
                                     </div>
-                                    <div className="bg-purple-50 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
-                                        <p className="text-2xl font-bold text-purple-600">{stats.documents}</p>
-                                        <p className="text-sm text-gray-600">Documents</p>
-                                        <p className="text-xs text-gray-400 mt-1">Requested</p>
+                                    <div className="bg-purple-50 dark:bg-purple-900/30 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
+                                        <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.documents}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Documents</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Requested</p>
                                     </div>
-                                    <div className="bg-yellow-50 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
-                                        <p className="text-2xl font-bold text-yellow-600">{stats.completed}</p>
-                                        <p className="text-sm text-gray-600">Completed</p>
-                                        <p className="text-xs text-gray-400 mt-1">Appointments + Tickets</p>
+                                    <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-4 text-center hover:shadow-md transition cursor-pointer">
+                                        <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.completed}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Appointments + Tickets</p>
                                     </div>
                                 </div>
                             </div>
@@ -293,8 +291,8 @@ function Profile() {
             </div>
 
             {/* Account Actions */}
-            <div className="mt-6 bg-white rounded-lg shadow-md p-6">
-                <h3 className="text-lg font-semibold text-red-600 mb-4">Account Actions</h3>
+            <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
+                <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Account Actions</h3>
                 <div className="flex flex-wrap gap-4">
                     <button
                         onClick={() => {
@@ -303,7 +301,7 @@ function Profile() {
                             toast.success('Logged out successfully');
                             window.location.href = '/login';
                         }}
-                        className="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition"
+                        className="bg-red-600 dark:bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition"
                     >
                         Logout
                     </button>
@@ -311,7 +309,7 @@ function Profile() {
                         onClick={() => {
                             toast.info('Change password feature coming soon!');
                         }}
-                        className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300 transition"
+                        className="bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition"
                     >
                         Change Password
                     </button>
@@ -319,7 +317,7 @@ function Profile() {
                         onClick={() => {
                             window.location.reload();
                         }}
-                        className="bg-blue-50 text-blue-600 px-6 py-2 rounded-lg hover:bg-blue-100 transition"
+                        className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-6 py-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition"
                     >
                         Refresh Data
                     </button>

@@ -2,9 +2,10 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
-function AdminRoute({ children }) {
+function ProtectedRoute({ children }) {
     const { user, loading } = useAuth();
 
+    // Show loading spinner while checking authentication
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -16,15 +17,13 @@ function AdminRoute({ children }) {
         );
     }
 
+    // If not logged in, redirect to login
     if (!user) {
         return <Navigate to="/login" replace />;
     }
 
-    if (user.role !== 'ADMIN') {
-        return <Navigate to="/dashboard" replace />;
-    }
-
+    // If logged in, render the children
     return children;
 }
 
-export default AdminRoute;
+export default ProtectedRoute;

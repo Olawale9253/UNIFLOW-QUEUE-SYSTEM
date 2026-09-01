@@ -24,6 +24,8 @@ public class RegisterRequest {
     @Size(max = 20, message = "Phone number must be less than 20 characters")
     private String phone;
 
+    private String role = "STUDENT";
+
     // Getters and Setters
     public String getMatriculationNumber() { return matriculationNumber; }
     public void setMatriculationNumber(String matriculationNumber) { this.matriculationNumber = matriculationNumber; }
@@ -39,4 +41,7 @@ public class RegisterRequest {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }
