@@ -8,6 +8,7 @@ public class UserResponse {
     private String email;
     private String fullName;
     private String phone;
+    private String profileImageUrl;
     private String role;
     private Boolean active;
     private LocalDateTime createdAt;
@@ -17,12 +18,13 @@ public class UserResponse {
 
     // Parameterized constructor
     public UserResponse(Long id, String matriculationNumber, String email, String fullName,
-                        String phone, String role, Boolean active, LocalDateTime createdAt) {
+                        String phone, String profileImageUrl, String role, Boolean active, LocalDateTime createdAt) {
         this.id = id;
         this.matriculationNumber = matriculationNumber;
         this.email = email;
         this.fullName = fullName;
         this.phone = phone;
+        this.profileImageUrl = profileImageUrl;
         this.role = role;
         this.active = active;
         this.createdAt = createdAt;
@@ -43,6 +45,9 @@ public class UserResponse {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getProfileImageUrl() { return profileImageUrl; }
+    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

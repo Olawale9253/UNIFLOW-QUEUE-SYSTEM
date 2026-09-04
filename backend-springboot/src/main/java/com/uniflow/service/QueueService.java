@@ -14,5 +14,6 @@ public interface QueueService {
     QueueResponse callNextTicket(Long officeId, Long staffId);
     QueueResponse completeTicket(Long ticketId, Long staffId);
     QueueResponse skipTicket(Long ticketId, Long staffId);
+    QueueResponse rescheduleTicket(Long ticketId, Long userId);
     List<LiveQueueResponse> getAllLiveQueues();
 }

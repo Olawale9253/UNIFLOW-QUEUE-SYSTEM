@@ -38,14 +38,14 @@ const Offices = () => {
     }
 
     return (
-        <div>
-            <h1 className="text-3xl font-bold mb-8">Offices</h1>
+        <div className="user-page">
+            <h1 className="user-page-title">Offices</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Office List */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-lg shadow-md p-4">
-                        <h2 className="text-xl font-semibold mb-4">All Offices</h2>
+                    <div className="user-card">
+                        <h2 className="user-card-title">All Offices</h2>
                         <div className="space-y-2">
                             {offices.map((office) => (
                                 <button
@@ -53,8 +53,8 @@ const Offices = () => {
                                     onClick={() => fetchServices(office.id)}
                                     className={`w-full text-left px-4 py-3 rounded-lg transition ${
                                         selectedOffice?.id === office.id
-                                            ? 'bg-blue-100 border-blue-500 border'
-                                            : 'hover:bg-gray-100'
+                                            ? 'bg-blue-50 border-blue-500 border text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
+                                                : 'border border-transparent text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                                     }`}
                                 >
                                     <p className="font-medium">{office.name}</p>
@@ -70,39 +70,39 @@ const Offices = () => {
                 {/* Office Details */}
                 <div className="lg:col-span-2">
                     {selectedOffice ? (
-                        <div className="bg-white rounded-lg shadow-md p-6">
-                            <h2 className="text-2xl font-bold mb-2">{selectedOffice.name}</h2>
-                            <p className="text-gray-600 mb-4">{selectedOffice.description || 'No description'}</p>
+                        <div className="user-card">
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{selectedOffice.name}</h2>
+                            <p className="mt-2 text-gray-600 dark:text-gray-400">{selectedOffice.description || 'No description'}</p>
 
-                            <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="my-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
-                                    <p className="text-sm text-gray-600">Working Hours</p>
-                                    <p className="font-medium">{selectedOffice.workingHoursStart} - {selectedOffice.workingHoursEnd}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Working Hours</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{selectedOffice.workingHoursStart} - {selectedOffice.workingHoursEnd}</p>
                                 </div>
                                 <div>
-                                    <p className="text-sm text-gray-600">Slot Duration</p>
-                                    <p className="font-medium">{selectedOffice.slotDurationMinutes} minutes</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Slot Duration</p>
+                                    <p className="font-medium text-gray-900 dark:text-white">{selectedOffice.slotDurationMinutes} minutes</p>
                                 </div>
                             </div>
 
-                            <h3 className="text-lg font-semibold mb-3">Services</h3>
+                            <h3 className="mb-3 text-lg font-semibold text-gray-900 dark:text-white">Services</h3>
                             {services.length === 0 ? (
                                 <p className="text-gray-500">No services available</p>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                                     {services.map((service) => (
-                                        <div key={service.id} className="border rounded-lg p-3">
-                                            <p className="font-medium">{service.name}</p>
-                                            <p className="text-sm text-gray-600">{service.description || 'No description'}</p>
-                                            <p className="text-sm text-gray-600">Duration: {service.durationMinutes} min</p>
+                                        <div key={service.id} className="rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+                                            <p className="font-medium text-gray-900 dark:text-white">{service.name}</p>
+                                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{service.description || 'No description'}</p>
+                                            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Duration: {service.durationMinutes} min</p>
                                         </div>
                                     ))}
                                 </div>
                             )}
                         </div>
                     ) : (
-                        <div className="bg-white rounded-lg shadow-md p-12 text-center">
-                            <p className="text-gray-500">Select an office to view details</p>
+                        <div className="user-card p-12 text-center">
+                            <p className="text-gray-500 dark:text-gray-400">Select an office to view details</p>
                         </div>
                     )}
                 </div>

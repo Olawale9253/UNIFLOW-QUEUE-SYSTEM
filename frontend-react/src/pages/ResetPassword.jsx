@@ -113,7 +113,7 @@ function ResetPassword() {
                     </button>
                 </form>
                 <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-                    <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Back to Login</Link>
+                    <Link to="/login" className="text-blue-600 dark:text-blue-400 no-underline">Back to Login</Link>
                 </p>
             </div>
         </div>

@@ -36,6 +36,9 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
+
     @Column(nullable = false)
     private String role = "STUDENT";
 
@@ -98,6 +101,9 @@ public class User {
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
+
+    public String getProfileImageUrl() { return profileImageUrl; }
+    public void setProfileImageUrl(String profileImageUrl) { this.profileImageUrl = profileImageUrl; }
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }

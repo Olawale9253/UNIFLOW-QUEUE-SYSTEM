@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 
 function Appointments() {
+    const navigate = useNavigate();
     const [appointments, setAppointments] = useState([]);
     const [offices, setOffices] = useState([]);
     const [services, setServices] = useState([]);
@@ -115,9 +117,7 @@ function Appointments() {
             });
 
             toast.success('Appointment booked successfully!');
-            await fetchData();
-            setSelectedTime('');
-            setAvailableSlots([]);
+            navigate('/dashboard');
         } catch (error) {
             console.error('Booking error:', error);
             toast.error(error.response?.data?.message || 'Failed to book appointment');
@@ -179,20 +179,20 @@ function Appointments() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Appointments</h1>
+        <div className="user-page">
+            <h1 className="user-page-title">Appointments</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Book Appointment Form */}
-                <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Book Appointment</h2>
+                <div className="user-card self-start lg:sticky lg:top-24 lg:col-span-1">
+                    <h2 className="user-card-title">Book Appointment</h2>
                     <form onSubmit={handleBookAppointment}>
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Office</label>
                             <select
                                 value={selectedOffice}
                                 onChange={handleOfficeChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                             >
                                 <option value="">Select Office</option>
@@ -206,7 +206,7 @@ function Appointments() {
                             <select
                                 value={selectedService}
                                 onChange={(e) => setSelectedService(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                                 disabled={!selectedOffice}
                             >
@@ -222,7 +222,7 @@ function Appointments() {
                                 type="date"
                                 value={selectedDate}
                                 onChange={handleDateChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                                 min={new Date().toISOString().split('T')[0]}
                             />
@@ -232,7 +232,7 @@ function Appointments() {
                             <select
                                 value={selectedTime}
                                 onChange={(e) => setSelectedTime(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                                 disabled={availableSlots.length === 0 || fetchingSlots}
                             >
@@ -252,7 +252,7 @@ function Appointments() {
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
+                            className="btn-primary w-full disabled:opacity-50"
                             disabled={!selectedOffice || !selectedService || !selectedTime}
                         >
                             Book Appointment
@@ -261,8 +261,8 @@ function Appointments() {
                 </div>
 
                 {/* My Appointments */}
-                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">My Appointments</h2>
+                <div className="user-card lg:col-span-2">
+                    <h2 className="user-card-title">My Appointments</h2>
                     {appointments.length === 0 ? (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No appointments booked</p>
                     ) : (

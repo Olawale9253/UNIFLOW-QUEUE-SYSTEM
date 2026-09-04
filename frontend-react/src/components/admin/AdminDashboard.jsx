@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
@@ -19,38 +19,74 @@ function AdminDashboard() {
     const [recentActivities, setRecentActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
+    const formatTime = (timestamp) => {
+        if (!timestamp) return 'Just now';
+        try {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
 
-    const fetchDashboardData = async () => {
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} mins ago`;
+            if (diffHours < 24) return `${diffHours} hours ago`;
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return date.toLocaleDateString();
+        } catch (e) {
+            return 'Just now';
+        }
+    };
+
+    const getActivityIcon = (type) => {
+        switch(type) {
+            case 'appointment': return '📅';
+            case 'queue': return '🎫';
+            case 'document': return '📄';
+            case 'user': return '👤';
+            case 'admin': return '⚙️';
+            default: return '📌';
+        }
+    };
+
+    const getActivityColor = (type) => {
+        switch(type) {
+            case 'appointment': return 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400';
+            case 'queue': return 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400';
+            case 'document': return 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400';
+            case 'user': return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400';
+            case 'admin': return 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400';
+            default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+        }
+    };
+
+    const fetchDashboardData = useCallback(async () => {
         try {
             setLoading(true);
 
-            // Fetch all users (students)
-            const usersRes = await api.get('/users');
-            const students = usersRes.data.filter(u => u.role === 'STUDENT');
+            console.log('🔄 Fetching dashboard data...');
 
-            // Fetch appointments
-            const appointmentsRes = await api.get('/appointments/my-appointments');
+            const [usersRes, appointmentsRes, officesRes, ticketsRes, documentsRes, activitiesRes] = await Promise.all([
+                api.get('/users'),
+                api.get('/appointments/my-appointments'),
+                api.get('/offices'),
+                api.get('/queues/my-tickets'),
+                api.get('/documents/my-requests'),
+                api.get('/activities/recent')
+            ]);
+
+            console.log('📊 Activities response:', activitiesRes.data);
+
+            const students = usersRes.data ? usersRes.data.filter(u => u.role === 'STUDENT') : [];
             const appointments = appointmentsRes.data || [];
-
-            // Fetch offices
-            const officesRes = await api.get('/offices');
             const offices = officesRes.data || [];
-
-            // Fetch queue tickets
-            const ticketsRes = await api.get('/queues/my-tickets');
             const tickets = ticketsRes.data || [];
-
-            // Fetch documents
-            const documentsRes = await api.get('/documents/my-requests');
             const documents = documentsRes.data || [];
 
-            // Calculate stats
             const today = new Date().toDateString();
             const todayAppointments = appointments.filter(a =>
-                new Date(a.appointmentTime).toDateString() === today
+                a.appointmentTime && new Date(a.appointmentTime).toDateString() === today
             );
 
             const pendingAppointments = appointments.filter(a => a.status === 'PENDING');
@@ -65,25 +101,48 @@ function AdminDashboard() {
                 pendingAppointments: pendingAppointments.length,
                 completedAppointments: completedAppointments.length,
                 totalOffices: offices.length,
-                totalStaff: usersRes.data.filter(u => u.role === 'STAFF').length
+                totalStaff: usersRes.data ? usersRes.data.filter(u => u.role === 'STAFF').length : 0
             });
 
-            // Recent activities (mock data - you can fetch from audit logs)
-            setRecentActivities([
-                { id: 1, user: 'John Doe', action: 'Booked an appointment', time: '5 mins ago', type: 'appointment' },
-                { id: 2, user: 'Jane Smith', action: 'Joined a queue', time: '10 mins ago', type: 'queue' },
-                { id: 3, user: 'Admin', action: 'Updated office hours', time: '30 mins ago', type: 'admin' },
-                { id: 4, user: 'Mike Johnson', action: 'Requested transcript', time: '1 hour ago', type: 'document' },
-                { id: 5, user: 'Sarah Williams', action: 'Cancelled appointment', time: '2 hours ago', type: 'appointment' },
-            ]);
+            // Process activities - FROM API, NOT HARDCODED
+            const activities = activitiesRes.data || [];
+            console.log('📋 Activities count:', activities.length);
+
+            if (activities && activities.length > 0) {
+                const formattedActivities = activities.map(activity => ({
+                    id: activity.id || Math.random(),
+                    user: activity.username || 'Unknown User',
+                    action: activity.action || 'Performed an action',
+                    time: formatTime(activity.timestamp),
+                    type: activity.type || 'general'
+                }));
+                setRecentActivities(formattedActivities);
+                console.log('✅ Set recent activities from API:', formattedActivities);
+            } else {
+                console.log('ℹ️ No activities found');
+                setRecentActivities([]);
+            }
 
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
+            console.error('❌ Error fetching dashboard data:', error);
             toast.error('Failed to load dashboard data');
+            setRecentActivities([]);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchDashboardData();
+
+        // Poll for updates every 5 seconds
+        const interval = setInterval(() => {
+            console.log('🔄 Polling for updates...');
+            fetchDashboardData();
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [fetchDashboardData]);
 
     if (loading) {
         return (
@@ -113,8 +172,10 @@ function AdminDashboard() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Students</p>
                             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalStudents}</p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-2xl">
-                            👨‍🎓
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -125,8 +186,10 @@ function AdminDashboard() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Appointments</p>
                             <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalAppointments}</p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-2xl">
-                            📅
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -137,8 +200,10 @@ function AdminDashboard() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">Queue Tickets</p>
                             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalQueueTickets}</p>
                         </div>
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center text-2xl">
-                            🎫
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -149,8 +214,10 @@ function AdminDashboard() {
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Offices</p>
                             <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.totalOffices}</p>
                         </div>
-                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center text-2xl">
-                            🏢
+                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -172,36 +239,38 @@ function AdminDashboard() {
                 </div>
             </div>
 
-            {/* Recent Activity */}
+            {/* Recent Activity - Using API Data */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                    <Link to="/admin/reports" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        View All →
-                    </Link>
+                    <div className="flex items-center space-x-3">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">Live updates every 5s</span>
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        <span className="text-xs text-blue-600 dark:text-blue-400">{recentActivities.length} activities</span>
+                    </div>
                 </div>
-                <div className="space-y-3">
-                    {recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                            <div className="flex items-center space-x-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                                    activity.type === 'appointment' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
-                                        activity.type === 'queue' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
-                                            activity.type === 'document' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
-                                                'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                                }`}>
-                                    {activity.type === 'appointment' ? '📅' :
-                                        activity.type === 'queue' ? '🎫' :
-                                            activity.type === 'document' ? '📄' : '⚙️'}
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">{activity.user}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{activity.action}</p>
-                                </div>
-                            </div>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{activity.time}</span>
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {recentActivities && recentActivities.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 dark:text-gray-400">No recent activities</p>
+                            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Activities will appear here when users perform actions</p>
                         </div>
-                    ))}
+                    ) : (
+                        recentActivities.map((activity) => (
+                            <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 animate-fade-in">
+                                <div className="flex items-center space-x-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${getActivityColor(activity.type)}`}>
+                                        {getActivityIcon(activity.type)}
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-900 dark:text-white">{activity.user}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">{activity.action}</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">{activity.time}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </AdminLayout>

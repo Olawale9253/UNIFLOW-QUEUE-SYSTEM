@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
@@ -7,6 +7,23 @@ function ForgotPassword() {
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [emailReady, setEmailReady] = useState(null);
+    const [checkingEmail, setCheckingEmail] = useState(true);
+
+    useEffect(() => {
+        const checkEmailStatus = async () => {
+            try {
+                const response = await api.get('/health/email-status');
+                setEmailReady(response.data.emailConfigured);
+            } catch (error) {
+                setEmailReady(false);
+            } finally {
+                setCheckingEmail(false);
+            }
+        };
+
+        checkEmailStatus();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,7 +51,7 @@ function ForgotPassword() {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
                         Please check your email and follow the instructions to reset your password.
                     </p>
-                    <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
+                    <Link to="/login" className="text-blue-600 dark:text-blue-400 no-underline">
                         Back to Login
                     </Link>
                 </div>
@@ -49,6 +66,13 @@ function ForgotPassword() {
                 <p className="text-gray-600 dark:text-gray-400 text-center mb-6">
                     Enter your email address and we'll send you a link to reset your password.
                 </p>
+
+                {!checkingEmail && !emailReady && (
+                    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+                        Email delivery is not configured yet. Set Gmail SMTP credentials before sending reset links.
+                    </div>
+                )}
+
                 <form onSubmit={handleSubmit}>
                     <div className="mb-6">
                         <label className="block text-gray-700 dark:text-gray-300 text-sm font-bold mb-2">Email Address</label>
@@ -63,14 +87,14 @@ function ForgotPassword() {
                     </div>
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || (emailReady === false)}
                         className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
                     >
-                        {loading ? 'Sending...' : 'Send Reset Link'}
+                        {loading ? 'Sending...' : emailReady === false ? 'Email Not Configured' : 'Send Reset Link'}
                     </button>
                 </form>
                 <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-                    Remember your password? <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">Login</Link>
+                    Remember your password? <Link to="/login" className="text-blue-600 dark:text-blue-400 no-underline">Login</Link>
                 </p>
             </div>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
+import UserAvatar from '../components/common/UserAvatar';
 
 function Profile() {
     const { user } = useAuth();
@@ -17,7 +18,8 @@ function Profile() {
         fullName: user?.fullName || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        matriculationNumber: user?.matriculationNumber || 'Not set',
+        matriculationNumber: user?.matriculationNumber || '',
+        profileImageUrl: user?.profileImageUrl || '',
         role: user?.role || 'STUDENT'
     });
     const [editMode, setEditMode] = useState(false);
@@ -36,7 +38,8 @@ function Profile() {
                 fullName: data.fullName || '',
                 email: data.email || '',
                 phone: data.phone || '',
-                matriculationNumber: data.matriculationNumber || 'Not set',
+                matriculationNumber: data.matriculationNumber || '',
+                profileImageUrl: data.profileImageUrl || '',
                 role: data.role || 'STUDENT'
             });
         } catch (error) {
@@ -79,13 +82,15 @@ function Profile() {
             const response = await api.put('/users/profile', null, {
                 params: {
                     fullName: profile.fullName,
-                    phone: profile.phone
+                    phone: profile.phone,
+                    matriculationNumber: profile.matriculationNumber,
+                    profileImageUrl: profile.profileImageUrl
                 }
             });
             toast.success('Profile updated successfully');
             setEditMode(false);
 
-            const updatedUser = { ...user, fullName: profile.fullName, phone: profile.phone };
+            const updatedUser = { ...user, ...profile };
             localStorage.setItem('user', JSON.stringify(updatedUser));
 
             await fetchProfile();
@@ -135,33 +140,33 @@ function Profile() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1>
+        <div className="user-page">
+            <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+                <h1 className="user-page-title mb-0">My Profile</h1>
                 {!editMode && (
                     <button
                         onClick={() => setEditMode(true)}
-                        className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
+                        className="btn-primary"
                     >
                         Edit Profile
                     </button>
                 )}
             </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden transition-colors duration-300">
+            <div className="user-card mx-auto max-w-4xl overflow-hidden p-0">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-700 dark:to-blue-800 px-6 py-8">
+                <div className="relative overflow-hidden bg-white px-6 py-8 shadow-medium dark:bg-white">
+                    <div className="absolute inset-y-0 right-0 w-1/3 bg-blue-600/20 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)]" />
                     <div className="flex items-center space-x-4">
-                        <div className="w-20 h-20 bg-white dark:bg-gray-200 rounded-full flex items-center justify-center text-3xl font-bold text-blue-600 dark:text-blue-700">
-                            {getInitials()}
-                        </div>
+                        <UserAvatar user={{ ...user, ...profile }} size="lg" className="rounded-xl bg-blue-500 ring-4 ring-blue-500/10" />
                         <div>
-                            <h2 className="text-2xl font-bold text-white">{profile.fullName || 'Student'}</h2>
+                            <p className="text-xs uppercase tracking-widest text-blue-600 font-semibold">Student workspace</p>
+                            <h2 className="text-2xl font-bold text-black">{profile.fullName || 'Student'}</h2>
                             <div className="flex items-center space-x-2 mt-1">
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleBadge()}`}>
                   {profile.role}
                 </span>
-                                <span className="px-3 py-1 bg-green-500/20 text-green-200 rounded-full text-xs font-medium">
+                                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
                   Active
                 </span>
                             </div>
@@ -170,7 +175,7 @@ function Profile() {
                 </div>
 
                 {/* Profile Content */}
-                <div className="p-6">
+                <div className="p-5 sm:p-6">
                     {editMode ? (
                         <form onSubmit={handleUpdateProfile}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -181,7 +186,7 @@ function Profile() {
                                         name="fullName"
                                         value={profile.fullName}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="input"
                                         required
                                     />
                                 </div>
@@ -192,7 +197,7 @@ function Profile() {
                                         name="phone"
                                         value={profile.phone}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                        className="input"
                                         placeholder="08012345678"
                                     />
                                 </div>
@@ -201,7 +206,7 @@ function Profile() {
                                     <input
                                         type="email"
                                         value={profile.email}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
+                                        className="input cursor-not-allowed bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                                         disabled
                                     />
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
@@ -210,11 +215,23 @@ function Profile() {
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Matriculation Number</label>
                                     <input
                                         type="text"
+                                        name="matriculationNumber"
                                         value={profile.matriculationNumber}
-                                        className="w-full px-4 py-2 border rounded-lg bg-gray-100 dark:bg-gray-600 cursor-not-allowed text-gray-500 dark:text-gray-400"
-                                        disabled
+                                        onChange={handleChange}
+                                        className="input"
+                                        placeholder="Enter matriculation number"
                                     />
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Matriculation number cannot be changed</p>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image URL</label>
+                                    <input
+                                        type="url"
+                                        name="profileImageUrl"
+                                        value={profile.profileImageUrl}
+                                        onChange={handleChange}
+                                        className="input"
+                                        placeholder="https://example.com/profile-image.jpg"
+                                    />
                                 </div>
                             </div>
 
@@ -222,7 +239,7 @@ function Profile() {
                                 <button
                                     type="submit"
                                     disabled={updating}
-                                    className="bg-blue-600 dark:bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition disabled:opacity-50"
+                                    className="btn-primary disabled:opacity-50"
                                 >
                                     {updating ? 'Saving...' : 'Save Changes'}
                                 </button>
@@ -232,7 +249,7 @@ function Profile() {
                                         setEditMode(false);
                                         fetchProfile();
                                     }}
-                                    className="bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+                                    className="btn-secondary"
                                 >
                                     Cancel
                                 </button>
@@ -251,11 +268,11 @@ function Profile() {
                                 </div>
                                 <div className="border-b dark:border-gray-700 pb-4">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Phone Number</p>
-                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.phone || 'Not set'}</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.phone || 'Not provided'}</p>
                                 </div>
                                 <div className="border-b dark:border-gray-700 pb-4">
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Matriculation Number</p>
-                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.matriculationNumber}</p>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-white">{profile.matriculationNumber || 'Not provided'}</p>
                                 </div>
                             </div>
 
@@ -291,7 +308,7 @@ function Profile() {
             </div>
 
             {/* Account Actions */}
-            <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-colors duration-300">
+            <div className="user-card mx-auto mt-6 max-w-4xl">
                 <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Account Actions</h3>
                 <div className="flex flex-wrap gap-4">
                     <button

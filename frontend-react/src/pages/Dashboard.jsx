@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import UserAvatar from '../components/common/UserAvatar';
 
 function Dashboard() {
   const { user } = useAuth();
@@ -68,6 +69,8 @@ function Dashboard() {
     return 'Good Night';
   };
 
+  const getFirstName = () => user?.fullName?.trim().split(/\s+/)[0] || 'Student';
+
   // Get current time
   const getCurrentTime = () => {
     const now = new Date();
@@ -102,33 +105,33 @@ function Dashboard() {
   }
 
   return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="user-page">
         {/* Welcome Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-xl p-6 md:p-8 mb-8">
+        <div className="relative overflow-hidden bg-white dark:bg-white rounded-xl shadow-medium p-6 md:p-8 mb-8 sticky top-16 z-20">
+          <div className="absolute inset-y-0 right-0 w-1/3 bg-blue-600/20 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)]" />
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                {getInitials()}
-              </div>
+            <div className="relative flex items-center space-x-4">
+              <UserAvatar user={user} size="md" className="h-14 w-14 rounded-xl bg-blue-500 text-xl ring-4 ring-white/10" />
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-white">
-                  {getGreeting()}, {user?.fullName || 'Student'}
+                <p className="greeting-text text-xs uppercase tracking-widest text-blue-600 font-semibold mb-1">Student workspace</p>
+                <h1 className="greeting-text text-2xl md:text-3xl font-bold text-black">
+                  {getGreeting()}, {getFirstName()}
                 </h1>
-                <p className="text-blue-100 mt-1">
-                  {getCurrentTime()} • Welcome back to UniFlow
+                <p className="greeting-text text-black mt-1">
+                  {getCurrentTime()} <span className="text-slate-400 px-1">/</span> Everything you need for today
                 </p>
               </div>
             </div>
-            <div className="mt-4 md:mt-0 flex gap-3">
+            <div className="relative mt-5 md:mt-0 flex flex-wrap gap-3">
               <Link
                   to="/queue"
-                  className="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition"
+                  className="px-4 py-2.5 border border-slate-300 text-black rounded-lg hover:bg-slate-50 transition font-semibold"
               >
                 Join Queue
               </Link>
               <Link
                   to="/appointments"
-                  className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition font-medium"
+                  className="px-4 py-2.5 bg-white text-slate-900 rounded-lg hover:bg-blue-50 transition font-semibold"
               >
                 Book Appointment
               </Link>
@@ -137,8 +140,8 @@ function Dashboard() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+        <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="card p-5 card-hover">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Appointments</p>
@@ -150,12 +153,12 @@ function Dashboard() {
                 </svg>
               </div>
             </div>
-            <Link to="/appointments" className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-2 inline-block">
+            <Link to="/appointments" className="text-xs text-blue-600 dark:text-blue-400 no-underline mt-2 inline-block">
               View all →
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+          <div className="card p-5 card-hover">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Queue Tickets</p>
@@ -167,12 +170,12 @@ function Dashboard() {
                 </svg>
               </div>
             </div>
-            <Link to="/queue" className="text-xs text-green-600 dark:text-green-400 hover:underline mt-2 inline-block">
+            <Link to="/queue" className="text-xs text-green-600 dark:text-green-400 no-underline mt-2 inline-block">
               View all →
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+          <div className="card p-5 card-hover">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Documents</p>
@@ -184,12 +187,12 @@ function Dashboard() {
                 </svg>
               </div>
             </div>
-            <Link to="/documents" className="text-xs text-purple-600 dark:text-purple-400 hover:underline mt-2 inline-block">
+            <Link to="/documents" className="text-xs text-purple-600 dark:text-purple-400 no-underline mt-2 inline-block">
               View all →
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
+          <div className="card p-5 card-hover">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Completed</p>
@@ -206,10 +209,10 @@ function Dashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-4">
           <Link
               to="/queue"
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+              className="card card-hover p-4 flex items-center space-x-3"
           >
             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +224,7 @@ function Dashboard() {
 
           <Link
               to="/appointments"
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+              className="card card-hover p-4 flex items-center space-x-3"
           >
             <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +236,7 @@ function Dashboard() {
 
           <Link
               to="/documents"
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+              className="card card-hover p-4 flex items-center space-x-3"
           >
             <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,7 +248,7 @@ function Dashboard() {
 
           <Link
               to="/offices"
-              className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+              className="card card-hover p-4 flex items-center space-x-3"
           >
             <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,13 +263,13 @@ function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Live Queues</h2>
-            <Link to="/queue" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            <Link to="/queue" className="text-sm text-blue-600 dark:text-blue-400 no-underline">
               View all queues →
             </Link>
           </div>
 
           {liveQueues.length === 0 ? (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-8 text-center border border-gray-100 dark:border-gray-700">
+              <div className="user-card p-8 text-center">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                   <svg className="w-8 h-8 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -280,7 +283,7 @@ function Dashboard() {
                 {liveQueues.map((queue) => (
                     <div
                         key={queue.officeId}
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition"
+                        className="user-card card-hover"
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -310,7 +313,7 @@ function Dashboard() {
                       {queue.waitingCount > 0 && (
                           <Link
                               to="/queue"
-                              className="mt-3 block text-center text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                              className="mt-3 block text-center text-sm text-blue-600 dark:text-blue-400 no-underline"
                           >
                             Join this queue →
                           </Link>

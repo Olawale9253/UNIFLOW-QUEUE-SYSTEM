@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface QueueTicketRepository extends JpaRepository<QueueTicket, Long> {
-    List<QueueTicket> findByOfficeIdAndStatus(Long officeId, String status);
+    List<QueueTicket> findByOfficeIdAndStatusOrderByPositionAsc(Long officeId, String status);
     List<QueueTicket> findByStudentId(Long studentId);
     QueueTicket findTopByOfficeIdOrderByPositionDesc(Long officeId);
     long countByOfficeIdAndStatus(Long officeId, String status);

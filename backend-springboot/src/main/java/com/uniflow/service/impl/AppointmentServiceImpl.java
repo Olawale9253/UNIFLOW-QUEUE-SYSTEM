@@ -13,6 +13,7 @@ import com.uniflow.repository.OfficeRepository;
 import com.uniflow.repository.ServiceRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.AppointmentService;
+import com.uniflow.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,17 +31,20 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
     private final ServiceRepository serviceRepository;
+    private final NotificationService notificationService;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     public AppointmentServiceImpl(AppointmentRepository appointmentRepository,
                                   UserRepository userRepository,
                                   OfficeRepository officeRepository,
-                                  ServiceRepository serviceRepository) {
+                                  ServiceRepository serviceRepository,
+                                  NotificationService notificationService) {
         this.appointmentRepository = appointmentRepository;
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
         this.serviceRepository = serviceRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -82,6 +86,27 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
         return mapToAppointmentResponse(savedAppointment);
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse confirmAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+
+        if (appointment.getStatus().equals("CANCELLED")) {
+            throw new BadRequestException("Cannot confirm a cancelled appointment");
+        }
+
+        appointment.setStatus("CONFIRMED");
+        Appointment updatedAppointment = appointmentRepository.save(appointment);
+        notificationService.createNotification(
+            appointment.getStudent().getId(),
+            "Appointment confirmed",
+            "Your appointment " + appointment.getReferenceNumber() + " at " + appointment.getOffice().getName() + " has been confirmed.",
+            "appointment"
+        );
+        return mapToAppointmentResponse(updatedAppointment);
     }
 
     @Override

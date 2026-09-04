@@ -8,7 +8,8 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,8 +24,16 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration.ms}")
     private Long expirationMs;
 
-    private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(secret.getBytes());
+    private SecretKey getSigningKey() {
+        // Decode the base64 encoded secret or generate a key
+        try {
+            byte[] keyBytes = Base64.getDecoder().decode(secret);
+            return Keys.hmacShaKeyFor(keyBytes);
+        } catch (IllegalArgumentException e) {
+            // If secret is not base64 encoded, use it directly
+            byte[] keyBytes = secret.getBytes();
+            return Keys.hmacShaKeyFor(keyBytes);
+        }
     }
 
     public String generateToken(User user) {

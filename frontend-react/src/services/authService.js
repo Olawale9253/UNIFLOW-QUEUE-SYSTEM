@@ -12,7 +12,7 @@ export const authService = {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify(response.data));
         }
-        return response.data;
+        return response.data; // Make sure this returns the full user data including role
     },
 
     logout: () => {

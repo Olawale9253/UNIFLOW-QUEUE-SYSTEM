@@ -11,6 +11,7 @@ import java.util.List;
 public interface AppointmentService {
     AppointmentResponse bookAppointment(AppointmentRequest request, Long userId);
     AppointmentResponse getAppointment(Long appointmentId);
+    AppointmentResponse confirmAppointment(Long appointmentId);
     List<AppointmentResponse> getUserAppointments(Long userId);
     List<AppointmentResponse> getOfficeAppointments(Long officeId);
     AppointmentResponse cancelAppointment(Long appointmentId, Long userId);

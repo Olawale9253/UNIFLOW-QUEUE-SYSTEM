@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
+import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 
 function AdminDashboard() {
+    const { user } = useAuth();
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalAppointments: 0,
@@ -18,45 +20,102 @@ function AdminDashboard() {
     });
     const [recentActivities, setRecentActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [isPolling, setIsPolling] = useState(false);
+    const prevActivitiesRef = useRef([]);
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour >= 5 && hour < 12) return 'Good Morning';
+        if (hour >= 12 && hour < 17) return 'Good Afternoon';
+        if (hour >= 17 && hour < 21) return 'Good Evening';
+        return 'Good Night';
+    };
 
-    const fetchDashboardData = async () => {
+    const getFirstName = () => user?.fullName?.trim().split(/\s+/)[0] || 'Admin';
+
+    const formatTime = (timestamp) => {
+        if (!timestamp) return 'Just now';
         try {
-            setLoading(true);
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
 
-            // Fetch all users (students)
-            const usersRes = await api.get('/users');
-            const students = usersRes.data.filter(u => u.role === 'STUDENT');
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} mins ago`;
+            if (diffHours < 24) return `${diffHours} hours ago`;
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return date.toLocaleDateString();
+        } catch (e) {
+            return 'Just now';
+        }
+    };
 
-            // Fetch appointments
-            const appointmentsRes = await api.get('/appointments/my-appointments');
+    const getActivityIcon = (type) => {
+        switch(type) {
+            case 'appointment': return '📅';
+            case 'queue': return '🎫';
+            case 'document': return '📄';
+            case 'user': return '👤';
+            case 'admin': return '⚙️';
+            default: return '📌';
+        }
+    };
+
+    const getActivityColor = (type) => {
+        switch(type) {
+            case 'appointment': return 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400';
+            case 'queue': return 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400';
+            case 'document': return 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400';
+            case 'user': return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-600 dark:text-yellow-400';
+            case 'admin': return 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400';
+            default: return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
+        }
+    };
+
+    const fetchDashboardData = useCallback(async (isInitial = false) => {
+        try {
+            // Only show loading on initial load
+            if (isInitial) {
+                setLoading(true);
+            }
+
+            // Set polling flag
+            if (!isInitial) {
+                setIsPolling(true);
+            }
+
+            console.log('🔄 Fetching dashboard data...');
+
+            const [usersRes, appointmentsRes, officesRes, ticketsRes, documentsRes, activitiesRes] = await Promise.all([
+                api.get('/users'),
+                api.get('/appointments/my-appointments'),
+                api.get('/offices'),
+                api.get('/queues/my-tickets'),
+                api.get('/documents/my-requests'),
+                api.get('/activities/recent')
+            ]);
+
+            console.log('📊 Activities response:', activitiesRes.data);
+
+            const students = usersRes.data ? usersRes.data.filter(u => u.role === 'STUDENT') : [];
             const appointments = appointmentsRes.data || [];
-
-            // Fetch offices
-            const officesRes = await api.get('/offices');
             const offices = officesRes.data || [];
-
-            // Fetch queue tickets
-            const ticketsRes = await api.get('/queues/my-tickets');
             const tickets = ticketsRes.data || [];
-
-            // Fetch documents
-            const documentsRes = await api.get('/documents/my-requests');
             const documents = documentsRes.data || [];
 
-            // Calculate stats
             const today = new Date().toDateString();
             const todayAppointments = appointments.filter(a =>
-                new Date(a.appointmentTime).toDateString() === today
+                a.appointmentTime && new Date(a.appointmentTime).toDateString() === today
             );
 
             const pendingAppointments = appointments.filter(a => a.status === 'PENDING');
             const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
 
-            setStats({
+            // Update stats - only if changed
+            const newStats = {
                 totalStudents: students.length,
                 totalAppointments: appointments.length,
                 totalQueueTickets: tickets.length,
@@ -65,25 +124,80 @@ function AdminDashboard() {
                 pendingAppointments: pendingAppointments.length,
                 completedAppointments: completedAppointments.length,
                 totalOffices: offices.length,
-                totalStaff: usersRes.data.filter(u => u.role === 'STAFF').length
+                totalStaff: usersRes.data ? usersRes.data.filter(u => u.role === 'STAFF').length : 0
+            };
+
+            // Only update stats if they changed (to prevent re-renders)
+            setStats(prevStats => {
+                const hasChanged = JSON.stringify(prevStats) !== JSON.stringify(newStats);
+                return hasChanged ? newStats : prevStats;
             });
 
-            // Recent activities
-            setRecentActivities([
-                { id: 1, user: 'John Doe', action: 'Booked an appointment', time: '5 mins ago', type: 'appointment' },
-                { id: 2, user: 'Jane Smith', action: 'Joined a queue', time: '10 mins ago', type: 'queue' },
-                { id: 3, user: 'Admin', action: 'Updated office hours', time: '30 mins ago', type: 'admin' },
-                { id: 4, user: 'Mike Johnson', action: 'Requested transcript', time: '1 hour ago', type: 'document' },
-                { id: 5, user: 'Sarah Williams', action: 'Cancelled appointment', time: '2 hours ago', type: 'appointment' },
-            ]);
+            // Process activities - only update if new activities arrived
+            const activities = activitiesRes.data || [];
+            console.log('📋 Activities count:', activities.length);
+
+            if (activities && activities.length > 0) {
+                const formattedActivities = activities.map(activity => ({
+                    id: activity.id || Math.random(),
+                    user: activity.username || 'Unknown User',
+                    action: activity.action || 'Performed an action',
+                    time: formatTime(activity.timestamp),
+                    type: activity.type || 'general',
+                    timestamp: activity.timestamp
+                }));
+
+                // Check if new activities arrived (compare with previous)
+                const prevIds = prevActivitiesRef.current.map(a => a.id);
+                const newIds = formattedActivities.map(a => a.id);
+                const hasNewActivities = newIds.some(id => !prevIds.includes(id));
+
+                if (hasNewActivities || prevActivitiesRef.current.length === 0) {
+                    setRecentActivities(formattedActivities);
+                    prevActivitiesRef.current = formattedActivities;
+                    console.log('✅ New activities detected, updating UI');
+
+                    // Show toast for new activities
+                    const newCount = newIds.filter(id => !prevIds.includes(id)).length;
+                    if (newCount > 0 && !isInitial) {
+                        toast.success(`📢 ${newCount} new ${newCount === 1 ? 'activity' : 'activities'}!`);
+                    }
+                } else {
+                    console.log('ℹ️ No new activities');
+                }
+            } else {
+                setRecentActivities([]);
+                prevActivitiesRef.current = [];
+            }
 
         } catch (error) {
-            console.error('Error fetching dashboard data:', error);
-            toast.error('Failed to load dashboard data');
+            console.error('❌ Error fetching dashboard data:', error);
+            if (isInitial) {
+                toast.error('Failed to load dashboard data');
+            }
         } finally {
-            setLoading(false);
+            if (isInitial) {
+                setLoading(false);
+            }
+            setIsPolling(false);
         }
-    };
+    }, []);
+
+    // Initial load
+    useEffect(() => {
+        fetchDashboardData(true);
+    }, []);
+
+    // Poll for updates every 5 seconds (without flickering)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (!isPolling) {
+                fetchDashboardData(false);
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [fetchDashboardData, isPolling]);
 
     if (loading) {
         return (
@@ -100,57 +214,70 @@ function AdminDashboard() {
 
     return (
         <AdminLayout>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Welcome to the admin panel. Here's an overview of your system.</p>
+            <div className="mb-7 rounded-xl bg-white p-6 shadow-medium">
+                <div className="flex justify-between items-start">
+                    <div>
+                        <p className="greeting-text text-xs uppercase tracking-widest text-blue-600 font-semibold mb-1">Admin workspace</p>
+                        <h1 className="greeting-text text-3xl font-bold text-black">{getGreeting()}, {getFirstName()}</h1>
+                        <p className="greeting-text text-black mt-1">A live view of activity across UniFlow.</p>
+                    </div>
+                </div>
             </div>
 
-            {/* Stats Cards */}
+            {/* Stats Cards - No flickering */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Students</p>
                             <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.totalStudents}</p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center text-2xl">
-                            👨‍🎓
+                        <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Appointments</p>
                             <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.totalAppointments}</p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center text-2xl">
-                            📅
+                        <div className="w-12 h-12 bg-green-100 dark:bg-green-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Queue Tickets</p>
                             <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalQueueTickets}</p>
                         </div>
-                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center text-2xl">
-                            🎫
+                        <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+                            </svg>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <div className="flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Total Offices</p>
                             <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{stats.totalOffices}</p>
                         </div>
-                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center text-2xl">
-                            🏢
+                        <div className="w-12 h-12 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center">
+                            <svg className="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
                         </div>
                     </div>
                 </div>
@@ -158,50 +285,58 @@ function AdminDashboard() {
 
             {/* Second Row Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Today's Appointments</p>
                     <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.todayAppointments}</p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="card card-hover p-5">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Pending Appointments</p>
                     <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pendingAppointments}</p>
                 </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700 hover:shadow-md transition">
                     <p className="text-sm text-gray-500 dark:text-gray-400">Completed Appointments</p>
                     <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedAppointments}</p>
                 </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+            {/* Recent Activity - No flickering */}
+            <div className="card p-6">
                 <div className="flex justify-between items-center mb-4">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Activity</h2>
-                    <Link to="/admin/reports" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-                        View All →
-                    </Link>
-                </div>
-                <div className="space-y-3">
-                    {recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
-                            <div className="flex items-center space-x-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                                    activity.type === 'appointment' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400' :
-                                        activity.type === 'queue' ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400' :
-                                            activity.type === 'document' ? 'bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400' :
-                                                'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
-                                }`}>
-                                    {activity.type === 'appointment' ? '📅' :
-                                        activity.type === 'queue' ? '🎫' :
-                                            activity.type === 'document' ? '📄' : '⚙️'}
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">{activity.user}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{activity.action}</p>
-                                </div>
-                            </div>
-                            <span className="text-sm text-gray-500 dark:text-gray-400">{activity.time}</span>
+                    <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-1.5">
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Live</span>
+                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
                         </div>
-                    ))}
+                        <span className="text-xs text-gray-400 dark:text-gray-500">|</span>
+                        <span className="text-xs text-blue-600 dark:text-blue-400">{recentActivities.length} activities</span>
+                        <Link to="/admin/activities" className="text-sm text-blue-600 dark:text-blue-400 no-underline">
+                            View All →
+                        </Link>
+                    </div>
+                </div>
+                <div className="space-y-3 max-h-80 overflow-y-auto">
+                    {recentActivities && recentActivities.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500 dark:text-gray-400">No recent activities</p>
+                            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Activities will appear here when users perform actions</p>
+                        </div>
+                    ) : (
+                        recentActivities.map((activity) => (
+                            <div key={activity.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-50 dark:hover:bg-gray-700/50 px-2 rounded-lg transition">
+                                <div className="flex items-center space-x-3">
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${getActivityColor(activity.type)}`}>
+                                        {getActivityIcon(activity.type)}
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-gray-900 dark:text-white">{activity.user}</p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">{activity.action}</p>
+                                    </div>
+                                </div>
+                                <span className="text-sm text-gray-500 dark:text-gray-400">{activity.time}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </AdminLayout>

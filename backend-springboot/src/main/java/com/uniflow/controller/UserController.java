@@ -41,6 +41,17 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/change-password")
+    public ResponseEntity<?> changePassword(
+            @RequestBody Map<String, String> request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        String currentPassword = request.get("currentPassword");
+        String newPassword = request.get("newPassword");
+
+        userService.changePassword(userDetails.getId(), currentPassword, newPassword);
+        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+    }
+
     @PutMapping("/{userId}/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> updateUserRole(
@@ -55,8 +66,11 @@ public class UserController {
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam(required = false) String fullName,
-            @RequestParam(required = false) String phone) {
-        UserResponse response = userService.updateUserProfile(userDetails.getId(), fullName, phone);
+            @RequestParam(required = false) String phone,
+            @RequestParam(required = false) String matriculationNumber,
+            @RequestParam(required = false) String profileImageUrl) {
+        UserResponse response = userService.updateUserProfile(
+                userDetails.getId(), fullName, phone, matriculationNumber, profileImageUrl);
         return ResponseEntity.ok(response);
     }
 

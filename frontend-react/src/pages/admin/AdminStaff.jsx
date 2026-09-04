@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import UserAvatar from '../../components/common/UserAvatar';
 
 function AdminStaff() {
     const [staff, setStaff] = useState([]);
@@ -174,9 +175,7 @@ function AdminStaff() {
                     <div key={member.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-3">
-                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                                    {getInitials(member.fullName)}
-                                </div>
+                                <UserAvatar user={member} size="lg" className="h-12 w-12 rounded-full bg-blue-500 text-lg" fallback="S" />
                                 <div>
                                     <h3 className="font-semibold text-gray-900 dark:text-white">{member.fullName}</h3>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">{member.email}</p>

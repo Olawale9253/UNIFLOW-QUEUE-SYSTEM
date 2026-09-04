@@ -3,8 +3,10 @@ package com.uniflow.controller;
 import com.uniflow.dto.request.AppointmentRequest;
 import com.uniflow.dto.response.AppointmentResponse;
 import com.uniflow.security.CustomUserDetails;
+import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.AppointmentService;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,7 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
@@ -20,9 +21,12 @@ import java.util.List;
 public class AppointmentController {
 
     private final AppointmentService appointmentService;
+    private final ActivityLogService activityLogService;
 
-    public AppointmentController(AppointmentService appointmentService) {
+    public AppointmentController(AppointmentService appointmentService,
+                                 ActivityLogService activityLogService) {
         this.appointmentService = appointmentService;
+        this.activityLogService = activityLogService;
     }
 
     @PostMapping("/book")
@@ -30,6 +34,19 @@ public class AppointmentController {
             @Valid @RequestBody AppointmentRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         AppointmentResponse response = appointmentService.bookAppointment(request, userDetails.getId());
+
+        // Log activity
+        try {
+            activityLogService.logActivity(
+                    userDetails.getFullName(),
+                    "Booked an appointment with " + response.getOfficeName(),
+                    "appointment"
+            );
+            System.out.println("✅ Activity logged: Appointment booked by " + userDetails.getFullName());
+        } catch (Exception e) {
+            System.err.println("❌ Failed to log activity: " + e.getMessage());
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -53,47 +70,61 @@ public class AppointmentController {
         return ResponseEntity.ok(responses);
     }
 
+    @PutMapping("/{appointmentId}/confirm")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<AppointmentResponse> confirmAppointment(@PathVariable Long appointmentId) {
+        AppointmentResponse response = appointmentService.confirmAppointment(appointmentId);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{appointmentId}/cancel")
     public ResponseEntity<AppointmentResponse> cancelAppointment(
             @PathVariable Long appointmentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         AppointmentResponse response = appointmentService.cancelAppointment(appointmentId, userDetails.getId());
+
+        // Log activity
+        try {
+            activityLogService.logActivity(
+                    userDetails.getFullName(),
+                    "Cancelled appointment: " + response.getReferenceNumber(),
+                    "appointment"
+            );
+            System.out.println("✅ Activity logged: Appointment cancelled by " + userDetails.getFullName());
+        } catch (Exception e) {
+            System.err.println("❌ Failed to log activity: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{appointmentId}/reschedule")
     public ResponseEntity<AppointmentResponse> rescheduleAppointment(
             @PathVariable Long appointmentId,
-            @RequestParam String newTime,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newTime,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-        LocalDateTime parsedTime = LocalDateTime.parse(newTime, formatter);
-        AppointmentResponse response = appointmentService.rescheduleAppointment(appointmentId, parsedTime, userDetails.getId());
+        AppointmentResponse response = appointmentService.rescheduleAppointment(appointmentId, newTime, userDetails.getId());
+
+        // Log activity
+        try {
+            activityLogService.logActivity(
+                    userDetails.getFullName(),
+                    "Rescheduled appointment: " + response.getReferenceNumber(),
+                    "appointment"
+            );
+            System.out.println("✅ Activity logged: Appointment rescheduled by " + userDetails.getFullName());
+        } catch (Exception e) {
+            System.err.println("❌ Failed to log activity: " + e.getMessage());
+        }
+
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/available-slots/{officeId}")
-    public ResponseEntity<?> getAvailableSlots(
+    public ResponseEntity<List<LocalDateTime>> getAvailableSlots(
             @PathVariable Long officeId,
-            @RequestParam String date) {
-        try {
-            System.out.println("=== GET /available-slots/" + officeId + "?date=" + date + " ===");
-
-            // Parse the date string to LocalDateTime (YYYY-MM-DD)
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            LocalDateTime dateTime = LocalDateTime.parse(date + "T00:00:00");
-            System.out.println("Parsed date: " + dateTime);
-
-            List<LocalDateTime> slots = appointmentService.getAvailableSlots(officeId, dateTime);
-
-            System.out.println("Returning " + slots.size() + " slots");
-
-            return ResponseEntity.ok(slots);
-        } catch (Exception e) {
-            System.err.println("Error in getAvailableSlots endpoint: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error: " + e.getMessage());
-        }
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime date) {
+        List<LocalDateTime> slots = appointmentService.getAvailableSlots(officeId, date);
+        return ResponseEntity.ok(slots);
     }
 }

@@ -14,6 +14,7 @@ import com.uniflow.repository.QueueTicketRepository;
 import com.uniflow.repository.ServiceRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.QueueService;
+import com.uniflow.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,17 +30,20 @@ public class QueueServiceImpl implements QueueService {
     private final OfficeRepository officeRepository;
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     public QueueServiceImpl(QueueTicketRepository queueTicketRepository,
                             OfficeRepository officeRepository,
                             ServiceRepository serviceRepository,
-                            UserRepository userRepository) {
+                            UserRepository userRepository,
+                            NotificationService notificationService) {
         this.queueTicketRepository = queueTicketRepository;
         this.officeRepository = officeRepository;
         this.serviceRepository = serviceRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -54,18 +58,35 @@ public class QueueServiceImpl implements QueueService {
         OfficeService service = serviceRepository.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
+        // Check if user already has an active ticket for THIS SAME office AND service
         List<QueueTicket> activeTickets = queueTicketRepository.findByStudentId(userId)
                 .stream()
                 .filter(ticket -> ticket.getStatus().equals("WAITING") || ticket.getStatus().equals("CALLED"))
+                .filter(ticket -> ticket.getOffice().getId().equals(office.getId()))
+                .filter(ticket -> ticket.getService().getId().equals(service.getId()))
                 .collect(Collectors.toList());
 
         if (!activeTickets.isEmpty()) {
-            throw new BadRequestException("You already have an active queue ticket");
+            throw new BadRequestException("You already have an active queue ticket for this office and service");
         }
 
-        long count = queueTicketRepository.countByOfficeIdAndStatus(office.getId(), "WAITING");
-        int position = (int) count + 1;
+        // Check if user already has an active ticket for THIS SAME office (different service)
+        List<QueueTicket> sameOfficeTickets = queueTicketRepository.findByStudentId(userId)
+                .stream()
+                .filter(ticket -> ticket.getStatus().equals("WAITING") || ticket.getStatus().equals("CALLED"))
+                .filter(ticket -> ticket.getOffice().getId().equals(office.getId()))
+                .collect(Collectors.toList());
 
+        if (!sameOfficeTickets.isEmpty()) {
+            String existingService = sameOfficeTickets.get(0).getService().getName();
+            throw new BadRequestException("You already have a queue ticket for " + office.getName() +
+                    " (Service: " + existingService + "). Please complete or cancel it first.");
+        }
+
+        // Get current position for this office
+        int position = getWaitingTickets(office.getId()).size() + 1;
+
+        // Generate ticket number
         String ticketNumber = generateTicketNumber(office.getId());
 
         QueueTicket ticket = new QueueTicket();
@@ -78,8 +99,9 @@ public class QueueServiceImpl implements QueueService {
         ticket.setEstimatedWaitTime(position * service.getDurationMinutes());
 
         QueueTicket savedTicket = queueTicketRepository.save(ticket);
+        reindexQueue(office.getId());
 
-        return mapToQueueResponse(savedTicket);
+        return mapToQueueResponse(queueTicketRepository.findById(savedTicket.getId()).orElse(savedTicket));
     }
 
     @Override
@@ -102,10 +124,10 @@ public class QueueServiceImpl implements QueueService {
         Office office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
 
-        List<QueueTicket> waitingTickets = queueTicketRepository.findByOfficeIdAndStatus(officeId, "WAITING");
+        List<QueueTicket> waitingTickets = getWaitingTickets(officeId);
         long waitingCount = queueTicketRepository.countByOfficeIdAndStatus(officeId, "WAITING");
 
-        List<QueueTicket> calledTickets = queueTicketRepository.findByOfficeIdAndStatus(officeId, "CALLED");
+        List<QueueTicket> calledTickets = queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, "CALLED");
         QueueTicket servingTicket = calledTickets.isEmpty() ? null : calledTickets.get(0);
 
         double avgWaitTime = waitingTickets.stream()
@@ -130,7 +152,7 @@ public class QueueServiceImpl implements QueueService {
     @Override
     @Transactional
     public QueueResponse callNextTicket(Long officeId, Long staffId) {
-        List<QueueTicket> waitingTickets = queueTicketRepository.findByOfficeIdAndStatus(officeId, "WAITING");
+        List<QueueTicket> waitingTickets = getWaitingTickets(officeId);
 
         if (waitingTickets.isEmpty()) {
             throw new BadRequestException("No waiting tickets in the queue");
@@ -141,6 +163,13 @@ public class QueueServiceImpl implements QueueService {
         ticket.setCalledAt(LocalDateTime.now());
 
         QueueTicket updatedTicket = queueTicketRepository.save(ticket);
+        reindexQueue(officeId);
+        notificationService.createNotification(
+            ticket.getStudent().getId(),
+            "Queue ticket called",
+            "Your ticket " + ticket.getTicketNumber() + " is now being served at " + ticket.getOffice().getName() + ".",
+            "queue"
+        );
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -159,6 +188,13 @@ public class QueueServiceImpl implements QueueService {
         ticket.setCompletedAt(LocalDateTime.now());
 
         QueueTicket updatedTicket = queueTicketRepository.save(ticket);
+        reindexQueue(ticket.getOffice().getId());
+        notificationService.createNotification(
+            ticket.getStudent().getId(),
+            "Queue ticket completed",
+            "Your ticket " + ticket.getTicketNumber() + " at " + ticket.getOffice().getName() + " has been completed.",
+            "queue"
+        );
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -176,7 +212,40 @@ public class QueueServiceImpl implements QueueService {
         ticket.setStatus("SKIPPED");
 
         QueueTicket updatedTicket = queueTicketRepository.save(ticket);
+        reindexQueue(ticket.getOffice().getId());
+        notificationService.createNotification(
+            ticket.getStudent().getId(),
+            "Queue ticket skipped",
+            "Your ticket " + ticket.getTicketNumber() + " at " + ticket.getOffice().getName() + " was skipped.",
+            "queue"
+        );
 
+        return mapToQueueResponse(updatedTicket);
+    }
+
+    @Override
+    @Transactional
+    public QueueResponse rescheduleTicket(Long ticketId, Long userId) {
+        QueueTicket ticket = queueTicketRepository.findById(ticketId)
+                .orElseThrow(() -> new ResourceNotFoundException("Queue ticket not found"));
+
+        if (!ticket.getStudent().getId().equals(userId)) {
+            throw new BadRequestException("You are not authorized to reschedule this ticket");
+        }
+        if (!ticket.getStatus().equals("WAITING")) {
+            throw new BadRequestException("Only waiting tickets can be rescheduled");
+        }
+
+        Long officeId = ticket.getOffice().getId();
+        ticket.setPosition(getWaitingTickets(officeId).size() + 1);
+        QueueTicket updatedTicket = queueTicketRepository.save(ticket);
+        reindexQueue(officeId);
+        notificationService.createNotification(
+                userId,
+                "Queue ticket rescheduled",
+                "Your ticket " + ticket.getTicketNumber() + " was moved to the end of the queue.",
+                "queue"
+        );
         return mapToQueueResponse(updatedTicket);
     }
 
@@ -193,6 +262,29 @@ public class QueueServiceImpl implements QueueService {
         String officeCode = String.format("%03d", officeId);
         String random = String.format("%04d", (int) (Math.random() * 10000));
         return "Q" + officeCode + timestamp.substring(6) + random;
+    }
+
+    private List<QueueTicket> getWaitingTickets(Long officeId) {
+        return queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, "WAITING");
+    }
+
+    private void reindexQueue(Long officeId) {
+        List<QueueTicket> waitingTickets = getWaitingTickets(officeId);
+        for (int index = 0; index < waitingTickets.size(); index++) {
+            QueueTicket ticket = waitingTickets.get(index);
+            int newPosition = index + 1;
+            if (!Integer.valueOf(newPosition).equals(ticket.getPosition())) {
+                ticket.setPosition(newPosition);
+                ticket.setEstimatedWaitTime(newPosition * ticket.getService().getDurationMinutes());
+                queueTicketRepository.save(ticket);
+                notificationService.createNotification(
+                        ticket.getStudent().getId(),
+                        "Queue position updated",
+                        "Your ticket " + ticket.getTicketNumber() + " is now position " + newPosition + ".",
+                        "queue"
+                );
+            }
+        }
     }
 
     private QueueResponse mapToQueueResponse(QueueTicket ticket) {

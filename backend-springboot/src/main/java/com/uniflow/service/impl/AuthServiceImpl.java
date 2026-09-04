@@ -26,6 +26,9 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
 
+    // Reset token expiration time in minutes
+    private static final int RESET_TOKEN_EXPIRY_MINUTES = 15;
+
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
                            JwtTokenProvider jwtTokenProvider,
@@ -39,17 +42,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
-        // Check if email already exists
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new BadRequestException("Email is already registered");
         }
 
-        // Check if matriculation number already exists
         if (userRepository.existsByMatriculationNumber(request.getMatriculationNumber())) {
             throw new BadRequestException("Matriculation number is already registered");
         }
 
-        // Create new user
         User user = new User();
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
@@ -57,9 +57,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPhone(request.getPhone());
         user.setMatriculationNumber(request.getMatriculationNumber());
 
-        // Set role - default to STUDENT if not provided
         String role = request.getRole() != null ? request.getRole() : "STUDENT";
-        // Validate role
         if (!Arrays.asList("STUDENT", "STAFF", "ADMIN").contains(role)) {
             role = "STUDENT";
         }
@@ -68,7 +66,7 @@ public class AuthServiceImpl implements AuthService {
 
         User savedUser = userRepository.save(user);
 
-        // Send welcome email (optional)
+        // Send welcome email
         try {
             emailService.sendWelcomeEmail(savedUser.getEmail(), savedUser.getFullName());
         } catch (Exception e) {
@@ -118,9 +116,12 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found with this email"));
 
+        // Generate reset token
         String resetToken = UUID.randomUUID().toString();
         user.setResetToken(resetToken);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(24));
+
+        // Set expiration to 15 minutes from now
+        user.setResetTokenExpiry(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
         userRepository.save(user);
 
         String resetLink = "http://localhost:3000/reset-password?token=" + resetToken;
@@ -130,8 +131,10 @@ public class AuthServiceImpl implements AuthService {
         System.out.println("Email: " + email);
         System.out.println("Reset Token: " + resetToken);
         System.out.println("Reset Link: " + resetLink);
+        System.out.println("Expires in: " + RESET_TOKEN_EXPIRY_MINUTES + " minutes");
         System.out.println("========================================");
 
+        // Send email
         try {
             emailService.sendPasswordResetEmail(email, resetLink);
         } catch (Exception e) {
@@ -144,8 +147,9 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByResetToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid reset token"));
 
+        // Check if token has expired
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Reset token has expired");
+            throw new BadRequestException("Reset token has expired. Please request a new password reset link.");
         }
 
         return true;
@@ -157,10 +161,12 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByResetToken(token)
                 .orElseThrow(() -> new BadRequestException("Invalid reset token"));
 
+        // Check if token has expired
         if (user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            throw new BadRequestException("Reset token has expired");
+            throw new BadRequestException("Reset token has expired. Please request a new password reset link.");
         }
 
+        // Update password
         user.setPasswordHash(passwordEncoder.encode(newPassword));
         user.setResetToken(null);
         user.setResetTokenExpiry(null);

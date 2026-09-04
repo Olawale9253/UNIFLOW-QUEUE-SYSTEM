@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 
 function Queue() {
+    const navigate = useNavigate();
     const [offices, setOffices] = useState([]);
     const [myTickets, setMyTickets] = useState([]);
-    const [liveQueues, setLiveQueues] = useState([]);
     const [selectedOffice, setSelectedOffice] = useState('');
     const [selectedService, setSelectedService] = useState('');
     const [services, setServices] = useState([]);
@@ -17,10 +18,9 @@ function Queue() {
 
     const fetchData = async () => {
         try {
-            const [officesRes, ticketsRes, liveQueuesRes] = await Promise.all([
+            const [officesRes, ticketsRes] = await Promise.all([
                 api.get('/offices/active'),
-                api.get('/queues/my-tickets'),
-                api.get('/queues/live/all')
+                api.get('/queues/my-tickets')
             ]);
 
             const uniqueOffices = Array.from(
@@ -28,7 +28,6 @@ function Queue() {
             );
             setOffices(uniqueOffices);
             setMyTickets(ticketsRes.data);
-            setLiveQueues(liveQueuesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
             toast.error('Failed to load queue data');
@@ -70,9 +69,20 @@ function Queue() {
                 serviceId: parseInt(selectedService)
             });
             toast.success(`Joined queue! Ticket: ${response.data.ticketNumber}`);
-            fetchData();
+            navigate('/dashboard');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to join queue');
+        }
+    };
+
+    const handleReschedule = async (ticketId) => {
+        if (!window.confirm('Move this ticket to the end of the queue?')) return;
+        try {
+            await api.put(`/queues/${ticketId}/reschedule`);
+            toast.success('Ticket moved to the end of the queue');
+            await fetchData();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to reschedule ticket');
         }
     };
 
@@ -98,20 +108,20 @@ function Queue() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Queue Management</h1>
+        <div className="user-page">
+            <h1 className="user-page-title">Queue Management</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Join Queue Form */}
-                <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Join Queue</h2>
+                <div className="user-card self-start lg:sticky lg:top-24 lg:col-span-1">
+                    <h2 className="user-card-title">Join Queue</h2>
                     <form onSubmit={handleJoinQueue}>
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Office</label>
                             <select
                                 value={selectedOffice}
                                 onChange={handleOfficeChange}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                             >
                                 <option value="">Select Office</option>
@@ -125,7 +135,7 @@ function Queue() {
                             <select
                                 value={selectedService}
                                 onChange={(e) => setSelectedService(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
+                                className="input"
                                 required
                                 disabled={!selectedOffice}
                             >
@@ -137,7 +147,7 @@ function Queue() {
                         </div>
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 dark:bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition"
+                            className="btn-primary w-full"
                         >
                             Join Queue
                         </button>
@@ -145,8 +155,8 @@ function Queue() {
                 </div>
 
                 {/* My Tickets */}
-                <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">My Queue Tickets</h2>
+                <div className="user-card lg:col-span-2">
+                    <h2 className="user-card-title">My Queue Tickets</h2>
                     {myTickets.length === 0 ? (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No active queue tickets</p>
                     ) : (
@@ -158,6 +168,15 @@ function Queue() {
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Ticket: {ticket.ticketNumber}</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Position: {ticket.position}</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Est. Wait: {ticket.estimatedWaitTime} min</p>
+                                        {ticket.status === 'WAITING' && (
+                                            <button
+                                                type="button"
+                                                onClick={() => handleReschedule(ticket.id)}
+                                                className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                            >
+                                                Reschedule turn
+                                            </button>
+                                        )}
                                     </div>
                                     <div>
                     <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadge(ticket.status)}`}>
@@ -169,25 +188,6 @@ function Queue() {
                         </div>
                     )}
                 </div>
-            </div>
-
-            {/* Live Queues */}
-            <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Live Queues</h2>
-                {liveQueues.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400 text-center py-8">No active queues</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {liveQueues.map((queue) => (
-                            <div key={queue.officeId} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                <h3 className="font-semibold text-gray-900 dark:text-white">{queue.officeName}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Now Serving: <span className="font-bold text-blue-600 dark:text-blue-400">{queue.currentServing || 'None'}</span></p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Waiting: {queue.waitingCount}</p>
-                                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Wait: {queue.averageWaitTime || 0} min</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
             </div>
         </div>
     );

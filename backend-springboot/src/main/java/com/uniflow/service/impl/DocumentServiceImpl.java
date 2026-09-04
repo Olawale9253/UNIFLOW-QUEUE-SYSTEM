@@ -11,6 +11,7 @@ import com.uniflow.repository.DocumentRequestRepository;
 import com.uniflow.repository.OfficeRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.DocumentService;
+import com.uniflow.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,15 +26,18 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRequestRepository documentRequestRepository;
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
+    private final NotificationService notificationService;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
     public DocumentServiceImpl(DocumentRequestRepository documentRequestRepository,
                                UserRepository userRepository,
-                               OfficeRepository officeRepository) {
+                               OfficeRepository officeRepository,
+                               NotificationService notificationService) {
         this.documentRequestRepository = documentRequestRepository;
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
+        this.notificationService = notificationService;
     }
 
     @Override
@@ -112,6 +116,12 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         DocumentRequest updatedRequest = documentRequestRepository.save(request);
+        notificationService.createNotification(
+            request.getStudent().getId(),
+            "Document request updated",
+            "Your " + request.getDocumentType().replace('_', ' ') + " request is now " + status + ".",
+            "document"
+        );
 
         return mapToDocumentResponse(updatedRequest);
     }

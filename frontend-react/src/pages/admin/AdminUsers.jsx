@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import UserAvatar from '../../components/common/UserAvatar';
 
 function AdminUsers() {
     const [users, setUsers] = useState([]);
@@ -74,7 +75,7 @@ function AdminUsers() {
                 <div className="flex items-center justify-center min-h-[60vh]">
                     <div className="text-center">
                         <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
-                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading users...</p>
+                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading students...</p>
                     </div>
                 </div>
             </AdminLayout>
@@ -84,8 +85,8 @@ function AdminUsers() {
     return (
         <AdminLayout>
             <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all users in the system.</p>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Management</h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all students in the system.</p>
             </div>
 
             {/* Filters */}
@@ -93,7 +94,7 @@ function AdminUsers() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
-                        placeholder="Search users..."
+                        placeholder="Search students..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
@@ -117,7 +118,7 @@ function AdminUsers() {
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Student</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Email</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Role</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
@@ -129,9 +130,7 @@ function AdminUsers() {
                             <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex items-center">
-                                        <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                            {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                                        </div>
+                                        <UserAvatar user={user} size="sm" />
                                         <div className="ml-3">
                                             <div className="text-sm font-medium text-gray-900 dark:text-white">{user.fullName || 'N/A'}</div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">{user.matriculationNumber || 'N/A'}</div>
@@ -179,7 +178,7 @@ function AdminUsers() {
                 </div>
                 {filteredUsers.length === 0 && (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        No users found
+                        No students found
                     </div>
                 )}
             </div>

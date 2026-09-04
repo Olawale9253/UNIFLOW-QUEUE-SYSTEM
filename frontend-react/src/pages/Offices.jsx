@@ -110,13 +110,13 @@ function Documents() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Document Requests</h1>
+        <div className="user-page">
+            <h1 className="user-page-title">Document Requests</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Request Document */}
-                <div className="lg:col-span-1 bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Request Document</h2>
+                <div className="user-card self-start lg:sticky lg:top-24 lg:col-span-1">
+                    <h2 className="user-card-title">Request Document</h2>
                     <form onSubmit={handleSubmit}>
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Office</label>
@@ -167,8 +167,8 @@ function Documents() {
 
                 {/* My Documents */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 mb-6">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Track Document</h2>
+                    <div className="user-card mb-6">
+                        <h2 className="user-card-title">Track Document</h2>
                         <form onSubmit={handleTrack} className="flex gap-4">
                             <input
                                 type="text"
@@ -201,8 +201,8 @@ function Documents() {
                         )}
                     </div>
 
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">My Requests</h2>
+                    <div className="user-card">
+                        <h2 className="user-card-title">My Requests</h2>
                         {documents.length === 0 ? (
                             <p className="text-gray-500 dark:text-gray-400 text-center py-8">No document requests</p>
                         ) : (
