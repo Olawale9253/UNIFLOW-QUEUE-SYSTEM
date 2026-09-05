@@ -1,0 +1,1 @@
+ALTER TABLE system_settings ALTER COLUMN logo_url TYPE TEXT;

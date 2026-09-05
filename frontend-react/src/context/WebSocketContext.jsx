@@ -1,52 +1,43 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import api from '../api/axiosConfig';
 
+// Create the context
 const WebSocketContext = createContext();
 
+// Provider component
 export function WebSocketProvider({ children }) {
     const [connected, setConnected] = useState(true);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
+        toast.success('🔌 Connected to real-time updates');
+
+        // Poll for updates every 10 seconds
         const interval = setInterval(() => {
-            fetchNotifications();
+            fetchUpdates();
         }, 10000);
 
-        fetchNotifications();
+        fetchUpdates();
 
         return () => {
             clearInterval(interval);
         };
     }, []);
 
-    const fetchNotifications = async () => {
-        if (!localStorage.getItem('token')) {
-            setNotifications([]);
-            setUnreadCount(0);
-            return;
-        }
-
+    const fetchUpdates = async () => {
         try {
-            const response = await api.get('/notifications');
-            const data = response.data || [];
-            setNotifications(data.map(notification => ({
-                ...notification,
-                timestamp: notification.createdAt
-            })));
-            setUnreadCount(data.filter(notification => !notification.read).length);
+            const response = await fetch('http://localhost:8081/api/queues/live/all');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Queue update:', data);
+            }
         } catch (error) {
-            console.error('Notification polling error:', error);
+            console.error('Polling error:', error);
         }
     };
 
-    const markAllAsRead = async () => {
-        try {
-            await api.put('/notifications/read-all');
-        } catch (error) {
-            console.error('Failed to mark notifications as read:', error);
-        }
+    const markAllAsRead = () => {
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
     };
@@ -56,12 +47,7 @@ export function WebSocketProvider({ children }) {
         setUnreadCount(0);
     };
 
-    const markNotificationAsRead = async (id) => {
-        try {
-            await api.put(`/notifications/${id}/read`);
-        } catch (error) {
-            console.error('Failed to mark notification as read:', error);
-        }
+    const markNotificationAsRead = (id) => {
         setNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, read: true } : n)
         );
@@ -82,6 +68,7 @@ export function WebSocketProvider({ children }) {
     );
 }
 
+// Hook to use the WebSocket context
 export function useWebSocket() {
     const context = useContext(WebSocketContext);
     if (!context) {

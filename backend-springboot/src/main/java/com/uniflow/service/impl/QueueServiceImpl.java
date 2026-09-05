@@ -101,6 +101,14 @@ public class QueueServiceImpl implements QueueService {
         QueueTicket savedTicket = queueTicketRepository.save(ticket);
         reindexQueue(office.getId());
 
+        notificationService.createNotification(
+            userId,
+            "Queue request received",
+            "Your queue ticket " + savedTicket.getTicketNumber() + " for " + service.getName()
+                + " at " + office.getName() + " has been created.",
+            "queue"
+        );
+
         return mapToQueueResponse(queueTicketRepository.findById(savedTicket.getId()).orElse(savedTicket));
     }
 
@@ -115,6 +123,13 @@ public class QueueServiceImpl implements QueueService {
     public List<QueueResponse> getUserQueues(Long userId) {
         List<QueueTicket> tickets = queueTicketRepository.findByStudentId(userId);
         return tickets.stream()
+                .map(this::mapToQueueResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<QueueResponse> getOfficeTickets(Long officeId) {
+        return queueTicketRepository.findByOfficeId(officeId).stream()
                 .map(this::mapToQueueResponse)
                 .collect(Collectors.toList());
     }
@@ -143,6 +158,7 @@ public class QueueServiceImpl implements QueueService {
                 officeId,
                 office.getName(),
                 servingTicket != null ? servingTicket.getTicketNumber() : "None",
+                servingTicket != null ? mapToQueueResponse(servingTicket) : null,
                 waitingCount,
                 (int) avgWaitTime,
                 waitingResponses

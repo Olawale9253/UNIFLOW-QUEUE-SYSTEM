@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
 
 function AdminOffices() {
     const [offices, setOffices] = useState([]);
@@ -52,7 +53,7 @@ function AdminOffices() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this office?')) return;
+        if (!(await confirmAction('Are you sure you want to delete this office?'))) return;
         try {
             await api.delete(`/offices/${id}`);
             toast.success('Office deleted successfully');
@@ -91,7 +92,7 @@ function AdminOffices() {
         <AdminLayout>
             <div className="mb-8 flex justify-between items-center">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Office Management</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Office</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all offices and their services.</p>
                 </div>
                 <button

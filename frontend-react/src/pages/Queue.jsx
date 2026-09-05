@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../utils/notifications';
 
 function Queue() {
     const navigate = useNavigate();
@@ -10,17 +11,22 @@ function Queue() {
     const [selectedOffice, setSelectedOffice] = useState('');
     const [selectedService, setSelectedService] = useState('');
     const [services, setServices] = useState([]);
+    const [liveQueues, setLiveQueues] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         fetchData();
+        const interval = setInterval(fetchLiveQueues, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchData = async () => {
         try {
-            const [officesRes, ticketsRes] = await Promise.all([
+            const [officesRes, ticketsRes, liveQueuesRes] = await Promise.all([
                 api.get('/offices/active'),
-                api.get('/queues/my-tickets')
+                api.get('/queues/my-tickets'),
+                api.get('/queues/live/all')
             ]);
 
             const uniqueOffices = Array.from(
@@ -28,11 +34,21 @@ function Queue() {
             );
             setOffices(uniqueOffices);
             setMyTickets(ticketsRes.data);
+            setLiveQueues(liveQueuesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
             toast.error('Failed to load queue data');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLiveQueues = async () => {
+        try {
+            const response = await api.get('/queues/live/all');
+            setLiveQueues(response.data);
+        } catch (error) {
+            console.error('Error fetching live queues:', error);
         }
     };
 
@@ -76,7 +92,7 @@ function Queue() {
     };
 
     const handleReschedule = async (ticketId) => {
-        if (!window.confirm('Move this ticket to the end of the queue?')) return;
+        if (!(await confirmAction('Move this ticket to the end of the queue?'))) return;
         try {
             await api.put(`/queues/${ticketId}/reschedule`);
             toast.success('Ticket moved to the end of the queue');
@@ -189,6 +205,7 @@ function Queue() {
                     )}
                 </div>
             </div>
+
         </div>
     );
 }

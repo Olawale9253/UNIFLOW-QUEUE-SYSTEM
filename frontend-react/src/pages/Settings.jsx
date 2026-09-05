@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../utils/notifications';
 
 function Settings() {
     const { user } = useAuth();
@@ -71,9 +72,9 @@ function Settings() {
         }
     };
 
-    const handleDeleteAccount = () => {
-        if (window.confirm('Are you sure you want to delete your account? This action cannot be undone!')) {
-            if (window.confirm('Really? All your data will be permanently deleted.')) {
+    const handleDeleteAccount = async () => {
+        if (await confirmAction('Are you sure you want to delete your account? This action cannot be undone!')) {
+            if (await confirmAction('Really? All your data will be permanently deleted.')) {
                 toast.error('Account deletion is not available yet. Please contact support.');
             }
         }

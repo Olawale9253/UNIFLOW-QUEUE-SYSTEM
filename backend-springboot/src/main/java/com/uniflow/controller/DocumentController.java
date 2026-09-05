@@ -5,6 +5,7 @@ import com.uniflow.dto.response.DocumentResponse;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.DocumentService;
+import com.uniflow.service.SystemSettingsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +21,20 @@ public class DocumentController {
 
     private final DocumentService documentService;
     private final ActivityLogService activityLogService;
+    private final SystemSettingsService systemSettingsService;
 
-    public DocumentController(DocumentService documentService, ActivityLogService activityLogService) {
+    public DocumentController(DocumentService documentService, ActivityLogService activityLogService,
+                              SystemSettingsService systemSettingsService) {
         this.documentService = documentService;
         this.activityLogService = activityLogService;
+        this.systemSettingsService = systemSettingsService;
     }
 
     @PostMapping("/request")
     public ResponseEntity<DocumentResponse> requestDocument(
             @Valid @RequestBody DocumentRequestDTO request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        systemSettingsService.requireAvailable("documents");
         DocumentResponse response = documentService.requestDocument(request, userDetails.getId());
 
         // Log activity
@@ -52,6 +57,12 @@ public class DocumentController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<DocumentResponse> responses = documentService.getUserDocuments(userDetails.getId());
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/office/{officeId}")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<List<DocumentResponse>> getOfficeDocuments(@PathVariable Long officeId) {
+        return ResponseEntity.ok(documentService.getOfficeDocuments(officeId));
     }
 
     @GetMapping("/{requestId}")

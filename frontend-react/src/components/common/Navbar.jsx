@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useWebSocket } from '../../context/WebSocketContext';
-import NotificationBell from './NotificationBell';
 import UserAvatar from './UserAvatar';
 import toast from 'react-hot-toast';
 import SchoolBranding from './SchoolBranding';
 
 function Navbar() {
   const { user, logout } = useAuth();
-  const { connected, maintenanceMode } = useWebSocket();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -35,8 +32,27 @@ function Navbar() {
     setIsProfileDropdownOpen(false);
   };
 
-  const hidePaths = ['/', '/login', '/register', '/forgot-password', '/reset-password'];
-  const hideNavbar = hidePaths.includes(location.pathname) || location.pathname.startsWith('/admin');
+  const hidePaths = [
+    '/',
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/dashboard',
+    '/queue',
+    '/appointments',
+    '/documents',
+    '/offices',
+    '/profile',
+    '/settings',
+    '/staff',
+    '/staff/queue',
+    '/staff/appointments',
+    '/staff/documents',
+  ];
+  const hideNavbar = hidePaths.includes(location.pathname)
+    || location.pathname.startsWith('/admin')
+    || location.pathname.startsWith('/staff');
 
   if (hideNavbar) return null;
 
@@ -52,11 +68,6 @@ function Navbar() {
           </div>
 
           <div className="hidden items-center space-x-3 lg:flex">
-            <div className="flex items-center space-x-1.5 rounded-full bg-gray-100 px-3 py-1.5 dark:bg-gray-700">
-              <span className={`h-2 w-2 rounded-full ${connected ? 'animate-pulse bg-green-500' : 'bg-red-500'}`} />
-              <span className={`text-xs ${maintenanceMode || !connected ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>{maintenanceMode ? 'Maintenance' : connected ? 'Live' : 'Offline'}</span>
-            </div>
-            <NotificationBell />
             <div className="relative" ref={dropdownRef}>
               <button onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)} className="flex items-center space-x-1 focus:outline-none" aria-label="Open profile menu">
                 <UserAvatar user={user} size="sm" />
@@ -74,7 +85,6 @@ function Navbar() {
           </div>
 
           <div className="flex items-center space-x-2 lg:hidden">
-            <NotificationBell />
             <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="rounded-lg p-2 transition hover:bg-gray-100 dark:hover:bg-gray-700" aria-label="Toggle menu">
               <svg className="h-6 w-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMobileMenuOpen ? 'M6 18 18 6M6 6l12 12' : 'M4 6h16M4 12h16M4 18h16'} /></svg>
             </button>
@@ -83,7 +93,6 @@ function Navbar() {
 
         <div ref={mobileMenuRef} className={`overflow-hidden transition-all duration-300 lg:hidden ${isMobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0'}`}>
           <div className="space-y-1 border-t border-gray-200 py-3 dark:border-gray-700">
-            <div className="flex items-center space-x-2 px-3 py-2"><span className={`h-2 w-2 rounded-full ${connected ? 'animate-pulse bg-green-500' : 'bg-red-500'}`} /><span className="text-sm text-gray-600 dark:text-gray-300">{maintenanceMode ? 'Maintenance' : connected ? 'Live' : 'Offline'}</span></div>
             <Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">My Profile</Link>
             <Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Settings</Link>
             <button onClick={handleLogout} className="block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-red-600 transition hover:bg-gray-100 dark:text-red-400 dark:hover:bg-gray-700">Logout</button>

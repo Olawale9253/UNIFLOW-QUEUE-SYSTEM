@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdminProvider } from './context/AdminContext';
 import { WebSocketProvider } from './context/WebSocketContext';
+import { BrandingProvider } from './context/BrandingContext';
+import AdminBranding from './components/admin/AdminBranding';
 
 // Route Guards
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -24,7 +26,7 @@ import Documents from './pages/Documents';
 import Offices from './pages/Offices';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
-import Navbar from './components/common/Navbar';
+import UserLayout from './components/common/UserLayout';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -40,6 +42,8 @@ import AdminProfile from './pages/admin/AdminProfile';
 // Staff Pages
 import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffQueue from './pages/staff/StaffQueue';
+import StaffAppointments from './pages/staff/StaffAppointments';
+import StaffDocuments from './pages/staff/StaffDocuments';
 
 function App() {
     return (
@@ -48,9 +52,9 @@ function App() {
                 <AuthProvider>
                     <AdminProvider>
                         <WebSocketProvider>
-                            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
-                                <Navbar />
-                                <main>
+                            <BrandingProvider>
+                                <div className="min-h-screen transition-colors duration-300">
+                                    <main>
                                     <Routes>
                                         {/* Public Routes */}
                                         <Route path="/" element={<LandingPage />} />
@@ -65,6 +69,11 @@ function App() {
                                                 <AdminDashboard />
                                             </AdminRoute>
                                         } />
+                                                                                <Route path="/admin/branding" element={
+                                                                                        <AdminRoute>
+                                                                                                <AdminBranding />
+                                                                                        </AdminRoute>
+                                                                                } />
                                         <Route path="/admin/users" element={
                                             <AdminRoute>
                                                 <AdminUsers />
@@ -117,49 +126,59 @@ function App() {
                                                 <StaffQueue />
                                             </StaffRoute>
                                         } />
+                                        <Route path="/staff/appointments" element={
+                                            <StaffRoute>
+                                                <StaffAppointments />
+                                            </StaffRoute>
+                                        } />
+                                        <Route path="/staff/documents" element={
+                                            <StaffRoute>
+                                                <StaffDocuments />
+                                            </StaffRoute>
+                                        } />
 
                                         {/* User Routes */}
                                         <Route path="/dashboard" element={
                                             <ProtectedRoute>
-                                                <Dashboard />
+                                                <UserLayout><Dashboard /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/queue" element={
                                             <ProtectedRoute>
-                                                <Queue />
+                                                <UserLayout><Queue /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/appointments" element={
                                             <ProtectedRoute>
-                                                <Appointments />
+                                                <UserLayout><Appointments /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/documents" element={
                                             <ProtectedRoute>
-                                                <Documents />
+                                                <UserLayout><Documents /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/offices" element={
                                             <ProtectedRoute>
-                                                <Offices />
+                                                <UserLayout><Offices /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/profile" element={
                                             <ProtectedRoute>
-                                                <Profile />
+                                                <UserLayout><Profile /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/settings" element={
                                             <ProtectedRoute>
-                                                <Settings />
+                                                <UserLayout><Settings /></UserLayout>
                                             </ProtectedRoute>
                                         } />
 
                                         {/* Catch all */}
                                         <Route path="*" element={<Navigate to="/" replace />} />
                                     </Routes>
-                                </main>
-                                <Toaster
+                                    </main>
+                                    <Toaster
                                     position="top-right"
                                     toastOptions={{
                                         duration: 4000,
@@ -184,8 +203,9 @@ function App() {
                                             },
                                         },
                                     }}
-                                />
-                            </div>
+                                    />
+                                </div>
+                            </BrandingProvider>
                         </WebSocketProvider>
                     </AdminProvider>
                 </AuthProvider>

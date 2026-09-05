@@ -6,6 +6,7 @@ import com.uniflow.dto.response.AuthResponse;
 import com.uniflow.exception.BadRequestException;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.AuthService;
+import com.uniflow.service.SystemSettingsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,14 +20,18 @@ public class AuthController {
 
     private final AuthService authService;
     private final ActivityLogService activityLogService;
+    private final SystemSettingsService systemSettingsService;
 
-    public AuthController(AuthService authService, ActivityLogService activityLogService) {
+    public AuthController(AuthService authService, ActivityLogService activityLogService,
+                          SystemSettingsService systemSettingsService) {
         this.authService = authService;
         this.activityLogService = activityLogService;
+        this.systemSettingsService = systemSettingsService;
     }
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
+        systemSettingsService.requireAvailable("registration");
         AuthResponse response = authService.register(request);
 
         // Log activity

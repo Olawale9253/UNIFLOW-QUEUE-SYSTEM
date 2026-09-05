@@ -1,7 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useBranding } from '../context/BrandingContext';
 
 function LandingPage() {
+    const { branding } = useBranding();
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-300">
             {/* Hero Section */}
@@ -10,7 +13,7 @@ function LandingPage() {
                     <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 dark:text-white tracking-tight">
                         Welcome to{' '}
                         <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              UniFlow
+              {branding.schoolName}
             </span>
                     </h1>
                     <p className="mt-4 text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
@@ -101,7 +104,7 @@ function LandingPage() {
                 {/* Footer CTA */}
                 <div className="mt-20 text-center">
                     <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Ready to Get Started?</h2>
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">Join thousands of students using UniFlow to manage their administrative tasks.</p>
+                    <p className="mt-2 text-gray-600 dark:text-gray-400">Join thousands of students using {branding.schoolName} to manage their administrative tasks.</p>
                     <div className="mt-6">
                         <Link
                             to="/register"
@@ -117,7 +120,7 @@ function LandingPage() {
             <footer className="bg-white dark:bg-gray-800 border-t dark:border-gray-700 mt-16 transition-colors duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div className="flex flex-col md:flex-row justify-between items-center">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">© 2026 UniFlow. All rights reserved.</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">© 2026 {branding.schoolName}. All rights reserved.</p>
                         <div className="flex space-x-6 mt-4 md:mt-0">
                             <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Privacy Policy</a>
                             <a href="#" className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">Terms of Service</a>

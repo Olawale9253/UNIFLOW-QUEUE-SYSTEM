@@ -101,6 +101,13 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<DocumentResponse> getOfficeDocuments(Long officeId) {
+        return documentRequestRepository.findByOfficeId(officeId).stream()
+                .map(this::mapToDocumentResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public DocumentResponse updateDocumentStatus(Long requestId, String status, String comments) {
         DocumentRequest request = documentRequestRepository.findById(requestId)

@@ -81,7 +81,7 @@ function AdminActivityLog() {
 
     return (
         <AdminLayout>
-            <div className="mb-8">
+            <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Activity Log</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View all student and staff activities across the system.</p>
             </div>

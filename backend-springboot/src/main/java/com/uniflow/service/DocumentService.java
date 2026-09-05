@@ -9,6 +9,7 @@ public interface DocumentService {
     DocumentResponse requestDocument(DocumentRequestDTO request, Long userId);
     DocumentResponse getDocumentRequest(Long requestId);
     List<DocumentResponse> getUserDocuments(Long userId);
+    List<DocumentResponse> getOfficeDocuments(Long officeId);
     DocumentResponse updateDocumentStatus(Long requestId, String status, String comments);
     DocumentResponse getDocumentByTrackingNumber(String trackingNumber);
 }

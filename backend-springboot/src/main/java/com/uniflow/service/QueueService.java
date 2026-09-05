@@ -10,6 +10,7 @@ public interface QueueService {
     QueueResponse joinQueue(QueueRequest request, Long userId);
     QueueResponse getQueueStatus(Long ticketId);
     List<QueueResponse> getUserQueues(Long userId);
+    List<QueueResponse> getOfficeTickets(Long officeId);
     LiveQueueResponse getLiveQueue(Long officeId);
     QueueResponse callNextTicket(Long officeId, Long staffId);
     QueueResponse completeTicket(Long ticketId, Long staffId);

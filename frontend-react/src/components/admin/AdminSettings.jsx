@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
 
 function AdminSettings() {
     const { darkMode, toggleDarkMode } = useTheme();
     const [settings, setSettings] = useState({
-        siteName: 'UniFlow',
         enableRegistration: true,
         enableAppointments: true,
         enableQueue: true,
@@ -31,10 +31,9 @@ function AdminSettings() {
         toast.success('Settings saved successfully!');
     };
 
-    const handleReset = () => {
-        if (window.confirm('Are you sure you want to reset all settings to default?')) {
+    const handleReset = async () => {
+        if (await confirmAction('Are you sure you want to reset all settings to default?')) {
             setSettings({
-                siteName: 'UniFlow',
                 enableRegistration: true,
                 enableAppointments: true,
                 enableQueue: true,
@@ -62,16 +61,6 @@ function AdminSettings() {
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">General Settings</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Site Name</label>
-                                <input
-                                    type="text"
-                                    name="siteName"
-                                    value={settings.siteName}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
-                                />
-                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Slot Duration (minutes)</label>
                                 <input

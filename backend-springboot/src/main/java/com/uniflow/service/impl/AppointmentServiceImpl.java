@@ -17,6 +17,7 @@ import com.uniflow.service.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -85,6 +86,14 @@ public class AppointmentServiceImpl implements AppointmentService {
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
 
+        notificationService.createNotification(
+            userId,
+            "Appointment request received",
+            "Your appointment request " + savedAppointment.getReferenceNumber() + " for "
+                + service.getName() + " at " + office.getName() + " has been submitted.",
+            "appointment"
+        );
+
         return mapToAppointmentResponse(savedAppointment);
     }
 
@@ -107,6 +116,30 @@ public class AppointmentServiceImpl implements AppointmentService {
             "appointment"
         );
         return mapToAppointmentResponse(updatedAppointment);
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse completeAppointment(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+        if (appointment.getStatus().equals("CANCELLED")) {
+            throw new BadRequestException("Cannot complete a cancelled appointment");
+        }
+        appointment.setStatus("COMPLETED");
+        return mapToAppointmentResponse(appointmentRepository.save(appointment));
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse cancelAppointmentByStaff(Long appointmentId) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
+        if (appointment.getStatus().equals("COMPLETED") || appointment.getStatus().equals("CANCELLED")) {
+            throw new BadRequestException("Appointment cannot be cancelled");
+        }
+        appointment.setStatus("CANCELLED");
+        return mapToAppointmentResponse(appointmentRepository.save(appointment));
     }
 
     @Override
@@ -183,26 +216,34 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<LocalDateTime> getAvailableSlots(Long officeId, LocalDateTime date) {
+    public List<LocalDateTime> getAvailableSlots(Long officeId, LocalDate date) {
         List<LocalDateTime> availableSlots = new ArrayList<>();
 
         try {
-            System.out.println("=== getAvailableSlots called ===");
-            System.out.println("Office ID: " + officeId);
-            System.out.println("Date: " + date);
+            Office office = officeRepository.findById(officeId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
 
-            // Generate slots from 9 AM to 5 PM with 30-minute intervals
-            LocalDateTime startTime = date.with(LocalTime.of(9, 0));
-            LocalDateTime endTime = date.with(LocalTime.of(17, 0));
-
-            System.out.println("Generating slots from " + startTime + " to " + endTime);
-
-            while (startTime.isBefore(endTime)) {
-                availableSlots.add(startTime);
-                startTime = startTime.plusMinutes(30);
+            if (date == null) {
+                return availableSlots;
             }
 
-            System.out.println("Generated " + availableSlots.size() + " slots");
+            LocalDateTime startTime = date.atTime(9, 0);
+            LocalDateTime endTime = date.atTime(17, 0);
+            List<LocalDateTime> bookedTimes = appointmentRepository.findByOfficeId(office.getId())
+                    .stream()
+                    .filter(appointment -> appointment.getStatus() != null && !"CANCELLED".equalsIgnoreCase(appointment.getStatus()))
+                    .map(Appointment::getAppointmentTime)
+                    .filter(slot -> slot != null && slot.toLocalDate().equals(date))
+                    .collect(Collectors.toList());
+
+            while (startTime.isBefore(endTime)) {
+                LocalDateTime slot = startTime;
+                boolean isBooked = bookedTimes.stream().anyMatch(booked -> booked.equals(slot));
+                if (!isBooked) {
+                    availableSlots.add(slot);
+                }
+                startTime = startTime.plusMinutes(30);
+            }
 
         } catch (Exception e) {
             System.err.println("Error in getAvailableSlots: " + e.getMessage());

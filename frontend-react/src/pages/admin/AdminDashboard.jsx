@@ -4,9 +4,11 @@ import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
+import { useBranding } from '../../context/BrandingContext';
 
 function AdminDashboard() {
     const { user } = useAuth();
+    const { branding } = useBranding();
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalAppointments: 0,
@@ -22,16 +24,6 @@ function AdminDashboard() {
     const [loading, setLoading] = useState(true);
     const [isPolling, setIsPolling] = useState(false);
     const prevActivitiesRef = useRef([]);
-
-    const getGreeting = () => {
-        const hour = new Date().getHours();
-        if (hour >= 5 && hour < 12) return 'Good Morning';
-        if (hour >= 12 && hour < 17) return 'Good Afternoon';
-        if (hour >= 17 && hour < 21) return 'Good Evening';
-        return 'Good Night';
-    };
-
-    const getFirstName = () => user?.fullName?.trim().split(/\s+/)[0] || 'Admin';
 
     const formatTime = (timestamp) => {
         if (!timestamp) return 'Just now';
@@ -89,42 +81,22 @@ function AdminDashboard() {
 
             console.log('🔄 Fetching dashboard data...');
 
-            const [usersRes, appointmentsRes, officesRes, ticketsRes, documentsRes, activitiesRes] = await Promise.all([
-                api.get('/users'),
-                api.get('/appointments/my-appointments'),
-                api.get('/offices'),
-                api.get('/queues/my-tickets'),
-                api.get('/documents/my-requests'),
+            const [statsRes, activitiesRes] = await Promise.all([
+                api.get('/admin/dashboard/stats'),
                 api.get('/activities/recent')
             ]);
 
             console.log('📊 Activities response:', activitiesRes.data);
-
-            const students = usersRes.data ? usersRes.data.filter(u => u.role === 'STUDENT') : [];
-            const appointments = appointmentsRes.data || [];
-            const offices = officesRes.data || [];
-            const tickets = ticketsRes.data || [];
-            const documents = documentsRes.data || [];
-
-            const today = new Date().toDateString();
-            const todayAppointments = appointments.filter(a =>
-                a.appointmentTime && new Date(a.appointmentTime).toDateString() === today
-            );
-
-            const pendingAppointments = appointments.filter(a => a.status === 'PENDING');
-            const completedAppointments = appointments.filter(a => a.status === 'COMPLETED');
-
-            // Update stats - only if changed
             const newStats = {
-                totalStudents: students.length,
-                totalAppointments: appointments.length,
-                totalQueueTickets: tickets.length,
-                totalDocuments: documents.length,
-                todayAppointments: todayAppointments.length,
-                pendingAppointments: pendingAppointments.length,
-                completedAppointments: completedAppointments.length,
-                totalOffices: offices.length,
-                totalStaff: usersRes.data ? usersRes.data.filter(u => u.role === 'STAFF').length : 0
+                totalStudents: statsRes.data.totalStudents || 0,
+                totalAppointments: statsRes.data.totalAppointments || 0,
+                totalQueueTickets: statsRes.data.totalQueueTickets || 0,
+                totalDocuments: statsRes.data.totalDocumentRequests || 0,
+                todayAppointments: statsRes.data.todayAppointments || 0,
+                pendingAppointments: statsRes.data.pendingAppointments || 0,
+                completedAppointments: statsRes.data.completedAppointments || 0,
+                totalOffices: statsRes.data.totalOffices || 0,
+                totalStaff: 0
             };
 
             // Only update stats if they changed (to prevent re-renders)
@@ -214,16 +186,6 @@ function AdminDashboard() {
 
     return (
         <AdminLayout>
-            <div className="mb-7 rounded-xl bg-white p-6 shadow-medium">
-                <div className="flex justify-between items-start">
-                    <div>
-                        <p className="greeting-text text-xs uppercase tracking-widest text-blue-600 font-semibold mb-1">Admin workspace</p>
-                        <h1 className="greeting-text text-3xl font-bold text-black">{getGreeting()}, {getFirstName()}</h1>
-                        <p className="greeting-text text-black mt-1">A live view of activity across UniFlow.</p>
-                    </div>
-                </div>
-            </div>
-
             {/* Stats Cards - No flickering */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div className="card card-hover p-5">

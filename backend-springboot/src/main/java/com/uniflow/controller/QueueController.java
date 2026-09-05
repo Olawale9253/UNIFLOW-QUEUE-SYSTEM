@@ -6,6 +6,7 @@ import com.uniflow.dto.response.QueueResponse;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.QueueService;
+import com.uniflow.service.SystemSettingsService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,16 +22,20 @@ public class QueueController {
 
     private final QueueService queueService;
     private final ActivityLogService activityLogService;
+    private final SystemSettingsService systemSettingsService;
 
-    public QueueController(QueueService queueService, ActivityLogService activityLogService) {
+    public QueueController(QueueService queueService, ActivityLogService activityLogService,
+                           SystemSettingsService systemSettingsService) {
         this.queueService = queueService;
         this.activityLogService = activityLogService;
+        this.systemSettingsService = systemSettingsService;
     }
 
     @PostMapping("/join")
     public ResponseEntity<QueueResponse> joinQueue(
             @Valid @RequestBody QueueRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        systemSettingsService.requireAvailable("queue");
         QueueResponse response = queueService.joinQueue(request, userDetails.getId());
 
         // Log activity
@@ -53,6 +58,12 @@ public class QueueController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         List<QueueResponse> responses = queueService.getUserQueues(userDetails.getId());
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/office/{officeId}/tickets")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<List<QueueResponse>> getOfficeTickets(@PathVariable Long officeId) {
+        return ResponseEntity.ok(queueService.getOfficeTickets(officeId));
     }
 
     @PutMapping("/{ticketId}/reschedule")

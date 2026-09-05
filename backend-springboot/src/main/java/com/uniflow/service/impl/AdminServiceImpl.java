@@ -38,11 +38,13 @@ public class AdminServiceImpl implements AdminService {
         LocalDateTime startOfDay = LocalDateTime.now().with(LocalTime.MIN);
         LocalDateTime endOfDay = LocalDateTime.now().with(LocalTime.MAX);
 
-        long totalStudents = userRepository.count();
+        long totalStudents = userRepository.countByRole("STUDENT");
         long totalAppointments = appointmentRepository.count();
         long totalQueueTickets = queueTicketRepository.count();
         long totalDocumentRequests = documentRequestRepository.count();
         long todayAppointments = appointmentRepository.findByAppointmentTimeBetween(startOfDay, endOfDay).size();
+        long pendingAppointments = appointmentRepository.countByStatus("PENDING");
+        long completedAppointments = appointmentRepository.countByStatus("COMPLETED");
         long totalOffices = officeRepository.count();
 
         DashboardStatsResponse response = new DashboardStatsResponse();
@@ -51,6 +53,8 @@ public class AdminServiceImpl implements AdminService {
         response.setTotalQueueTickets(totalQueueTickets);
         response.setTotalDocumentRequests(totalDocumentRequests);
         response.setTodayAppointments(todayAppointments);
+        response.setPendingAppointments(pendingAppointments);
+        response.setCompletedAppointments(completedAppointments);
         response.setTotalOffices(totalOffices);
         response.setTotalServices(0L);
 

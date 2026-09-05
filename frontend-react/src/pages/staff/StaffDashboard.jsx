@@ -18,19 +18,33 @@ function StaffDashboard() {
 
     useEffect(() => {
         fetchDashboardData();
+        const interval = setInterval(fetchDashboardData, 10000);
+
+        return () => clearInterval(interval);
     }, []);
 
     const fetchDashboardData = async () => {
         try {
-            const [appointmentsRes, ticketsRes, documentsRes] = await Promise.all([
-                api.get('/appointments/my-appointments'),
-                api.get('/queues/my-tickets'),
-                api.get('/documents/my-requests')
-            ]);
+            const officesRes = await api.get('/offices/active');
+            const offices = officesRes.data || [];
+            const officeData = await Promise.all(offices.map(async (office) => {
+                const [appointmentsRes, queueRes, documentsRes, ticketsRes] = await Promise.all([
+                    api.get(`/appointments/office/${office.id}`),
+                    api.get(`/queues/live/${office.id}`),
+                    api.get(`/documents/office/${office.id}`),
+                    api.get(`/queues/office/${office.id}/tickets`)
+                ]);
+                return {
+                    appointments: appointmentsRes.data || [],
+                    queue: queueRes.data || {},
+                    documents: documentsRes.data || [],
+                    tickets: ticketsRes.data || []
+                };
+            }));
 
-            const appointments = appointmentsRes.data || [];
-            const tickets = ticketsRes.data || [];
-            const documents = documentsRes.data || [];
+            const appointments = officeData.flatMap(data => data.appointments);
+            const documents = officeData.flatMap(data => data.documents);
+            const tickets = officeData.flatMap(data => data.tickets);
 
             const today = new Date().toDateString();
             const todayAppointments = appointments.filter(a =>
@@ -39,7 +53,7 @@ function StaffDashboard() {
 
             setStats({
                 todayAppointments: todayAppointments.length,
-                pendingQueues: tickets.filter(t => t.status === 'WAITING').length,
+                pendingQueues: officeData.reduce((total, data) => total + (data.queue.waitingCount || 0), 0),
                 pendingDocuments: documents.filter(d => d.status === 'SUBMITTED' || d.status === 'UNDER_REVIEW').length,
                 completedToday: tickets.filter(t => t.status === 'COMPLETED').length +
                     appointments.filter(a => a.status === 'COMPLETED').length
@@ -70,82 +84,84 @@ function StaffDashboard() {
 
     return (
         <StaffLayout>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Staff Dashboard</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                    Welcome back, {user?.fullName || 'Staff'}!
-                </p>
-            </div>
+            <div className="user-page">
+                <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <div className="card card-hover p-5">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Today&apos;s Appointments</p>
+                        <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.todayAppointments}</p>
+                    </div>
+                    <div className="card card-hover p-5">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pending Queues</p>
+                        <p className="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pendingQueues}</p>
+                    </div>
+                    <div className="card card-hover p-5">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Pending Documents</p>
+                        <p className="mt-1 text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.pendingDocuments}</p>
+                    </div>
+                    <div className="card card-hover p-5">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Completed Today</p>
+                        <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedToday}</p>
+                    </div>
+                </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Today's Appointments</p>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.todayAppointments}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Pending Queues</p>
-                    <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.pendingQueues}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Pending Documents</p>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.pendingDocuments}</p>
-                </div>
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-5 border border-gray-100 dark:border-gray-700">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Completed Today</p>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completedToday}</p>
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
                 <Link
                     to="/staff/queue"
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+                    className="card card-hover flex items-center space-x-3 p-4"
                 >
-                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/50 rounded-lg flex items-center justify-center text-xl">
-                        🎫
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h10M18 16v4m-2-2h4" />
+                        </svg>
                     </div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Manage Queues</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Manage Queues</span>
                 </Link>
 
                 <Link
                     to="/staff/appointments"
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+                    className="card card-hover flex items-center space-x-3 p-4"
                 >
-                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/50 rounded-lg flex items-center justify-center text-xl">
-                        📅
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/50 dark:text-green-400">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <rect x="3" y="4" width="18" height="17" rx="2" />
+                            <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18" />
+                        </svg>
                     </div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">View Appointments</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">View Appointments</span>
                 </Link>
 
                 <Link
                     to="/staff/documents"
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 hover:shadow-md transition flex items-center space-x-3"
+                    className="card card-hover flex items-center space-x-3 p-4"
                 >
-                    <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/50 rounded-lg flex items-center justify-center text-xl">
-                        📄
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/50 dark:text-purple-400">
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M14 2v6h6M8 13h8M8 17h6" />
+                        </svg>
                     </div>
-                    <span className="font-medium text-gray-700 dark:text-gray-300">Process Documents</span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">Process Documents</span>
                 </Link>
-            </div>
+                </div>
 
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Recent Queue Tickets</h2>
+                <div className="card p-6">
+                <h2 className="mb-4 text-xl font-semibold text-slate-900 dark:text-white">Recent Queue Tickets</h2>
                 {recentTickets.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400 text-center py-8">No recent tickets</p>
+                    <p className="py-8 text-center text-slate-500 dark:text-slate-400">No recent tickets</p>
                 ) : (
                     <div className="space-y-3">
                         {recentTickets.map((ticket) => (
-                            <div key={ticket.id} className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-gray-700 last:border-0">
+                            <div key={ticket.id} className="flex items-center justify-between border-b border-slate-100 py-2 last:border-0 dark:border-slate-700">
                                 <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">{ticket.officeName}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Ticket: {ticket.ticketNumber}</p>
+                                    <p className="font-medium text-slate-900 dark:text-white">{ticket.officeName}</p>
+                                    <p className="text-sm text-slate-600 dark:text-slate-400">Ticket: {ticket.ticketNumber}</p>
                                 </div>
                                 <div>
                   <span className={`px-2 py-1 rounded-full text-xs ${
                       ticket.status === 'WAITING' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' :
                           ticket.status === 'CALLED' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                               ticket.status === 'COMPLETED' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' :
-                                  'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                                  'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-300'
                   }`}>
                     {ticket.status}
                   </span>
@@ -154,6 +170,7 @@ function StaffDashboard() {
                         ))}
                     </div>
                 )}
+                </div>
             </div>
         </StaffLayout>
     );

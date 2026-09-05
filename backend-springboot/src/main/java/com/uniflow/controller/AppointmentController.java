@@ -5,6 +5,7 @@ import com.uniflow.dto.response.AppointmentResponse;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.AppointmentService;
+import com.uniflow.service.SystemSettingsService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,17 +24,21 @@ public class AppointmentController {
 
     private final AppointmentService appointmentService;
     private final ActivityLogService activityLogService;
+    private final SystemSettingsService systemSettingsService;
 
     public AppointmentController(AppointmentService appointmentService,
-                                 ActivityLogService activityLogService) {
+                                 ActivityLogService activityLogService,
+                                 SystemSettingsService systemSettingsService) {
         this.appointmentService = appointmentService;
         this.activityLogService = activityLogService;
+        this.systemSettingsService = systemSettingsService;
     }
 
     @PostMapping("/book")
     public ResponseEntity<AppointmentResponse> bookAppointment(
             @Valid @RequestBody AppointmentRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        systemSettingsService.requireAvailable("appointments");
         AppointmentResponse response = appointmentService.bookAppointment(request, userDetails.getId());
 
         // Log activity
@@ -75,6 +81,18 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> confirmAppointment(@PathVariable Long appointmentId) {
         AppointmentResponse response = appointmentService.confirmAppointment(appointmentId);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{appointmentId}/complete")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<AppointmentResponse> completeAppointment(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(appointmentService.completeAppointment(appointmentId));
+    }
+
+    @DeleteMapping("/{appointmentId}/staff-cancel")
+    @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+    public ResponseEntity<AppointmentResponse> cancelAppointmentByStaff(@PathVariable Long appointmentId) {
+        return ResponseEntity.ok(appointmentService.cancelAppointmentByStaff(appointmentId));
     }
 
     @DeleteMapping("/{appointmentId}/cancel")
@@ -123,7 +141,7 @@ public class AppointmentController {
     @GetMapping("/available-slots/{officeId}")
     public ResponseEntity<List<LocalDateTime>> getAvailableSlots(
             @PathVariable Long officeId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDateTime date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<LocalDateTime> slots = appointmentService.getAvailableSlots(officeId, date);
         return ResponseEntity.ok(slots);
     }

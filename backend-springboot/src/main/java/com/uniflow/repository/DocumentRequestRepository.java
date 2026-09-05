@@ -10,5 +10,6 @@ import java.util.Optional;
 @Repository
 public interface DocumentRequestRepository extends JpaRepository<DocumentRequest, Long> {
     List<DocumentRequest> findByStudentId(Long studentId);
+    List<DocumentRequest> findByOfficeId(Long officeId);
     Optional<DocumentRequest> findByTrackingNumber(String trackingNumber);
 }

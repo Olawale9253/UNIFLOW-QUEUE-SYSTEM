@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import PasswordStrength from '../components/common/PasswordStrength';
 import toast from 'react-hot-toast';
+import { useBranding } from '../context/BrandingContext';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -17,6 +18,7 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const { register } = useAuth();
+  const { branding } = useBranding();
   const navigate = useNavigate();
 
   const validateForm = () => {
@@ -116,7 +118,8 @@ function Register() {
         <div className="card w-full max-w-md p-6 sm:p-8">
           <div className="text-center mb-8">
             <Link to="/">
-              <h1 className="gradient-text text-4xl font-bold">UniFlow</h1>
+              <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" />
+              <h1 className="gradient-text text-3xl font-black">{branding.schoolName}</h1>
             </Link>
             <p className="mt-2 text-slate-600 dark:text-slate-400">Create your account</p>
           </div>

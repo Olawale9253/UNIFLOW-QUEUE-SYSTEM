@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../utils/notifications';
 
 const Appointments = () => {
     const { user } = useAuth();
@@ -86,7 +87,7 @@ const Appointments = () => {
     };
 
     const handleCancelAppointment = async (appointmentId) => {
-        if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+        if (!(await confirmAction('Are you sure you want to cancel this appointment?'))) return;
 
         try {
             await api.delete(`/appointments/${appointmentId}/cancel`);

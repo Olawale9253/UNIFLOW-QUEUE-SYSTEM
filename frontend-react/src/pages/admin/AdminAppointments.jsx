@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
 
 function AdminAppointments() {
     const [appointments, setAppointments] = useState([]);
@@ -43,7 +44,7 @@ function AdminAppointments() {
     };
 
     const handleCancelAppointment = async (appointmentId) => {
-        if (!window.confirm('Are you sure you want to cancel this appointment?')) return;
+        if (!(await confirmAction('Are you sure you want to cancel this appointment?'))) return;
 
         try {
             await api.delete(`/appointments/${appointmentId}/cancel`);
@@ -131,8 +132,8 @@ function AdminAppointments() {
 
     return (
         <AdminLayout>
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Appointments Management</h1>
+            <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Appointment</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage all appointments in the system.</p>
             </div>
 

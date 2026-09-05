@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
+    long countByStatus(String status);
     List<Appointment> findByStudentId(Long studentId);
     List<Appointment> findByOfficeId(Long officeId);
     List<Appointment> findByAppointmentTimeBetween(LocalDateTime start, LocalDateTime end);

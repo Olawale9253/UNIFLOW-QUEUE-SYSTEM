@@ -153,7 +153,7 @@ function Profile() {
                 )}
             </div>
 
-            <div className="user-card mx-auto max-w-4xl overflow-hidden p-0">
+            <div className="user-card w-full max-w-4xl overflow-hidden p-0">
                 {/* Profile Header */}
                 <div className="relative overflow-hidden bg-white px-6 py-8 shadow-medium dark:bg-white">
                     <div className="absolute inset-y-0 right-0 w-1/3 bg-blue-600/20 [clip-path:polygon(35%_0,100%_0,100%_100%,0_100%)]" />
@@ -308,7 +308,7 @@ function Profile() {
             </div>
 
             {/* Account Actions */}
-            <div className="user-card mx-auto mt-6 max-w-4xl">
+            <div className="user-card mt-6 w-full max-w-4xl">
                 <h3 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4">Account Actions</h3>
                 <div className="flex flex-wrap gap-4">
                     <button
@@ -318,8 +318,11 @@ function Profile() {
                             toast.success('Logged out successfully');
                             window.location.href = '/login';
                         }}
-                        className="bg-red-600 dark:bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-700 dark:hover:bg-red-600 transition"
+                        className="flex items-center gap-2 rounded-lg bg-red-600 px-6 py-2 text-white transition hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-600"
                     >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 17l5-5-5-5M15 12H3m8 8h7a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-7" />
+                        </svg>
                         Logout
                     </button>
                     <button

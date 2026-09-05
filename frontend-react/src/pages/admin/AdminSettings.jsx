@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
+import api from '../../api/axiosConfig';
+import { useBranding } from '../../context/BrandingContext';
 
 function AdminSettings() {
     const { darkMode, toggleDarkMode } = useTheme();
+    const { refreshBranding } = useBranding();
     const [settings, setSettings] = useState({
-        siteName: 'UniFlow',
         enableRegistration: true,
         enableAppointments: true,
         enableQueue: true,
@@ -18,6 +21,18 @@ function AdminSettings() {
         workingHoursEnd: '17:00'
     });
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        const loadSettings = async () => {
+            try {
+                const response = await api.get('/system/settings');
+                setSettings(response.data);
+            } catch (error) {
+                toast.error('Failed to load system settings');
+            }
+        };
+        loadSettings();
+    }, []);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -31,9 +46,9 @@ function AdminSettings() {
         e.preventDefault();
         setLoading(true);
         try {
-            // In a real app, you would save to backend here
-            // await api.put('/admin/settings', settings);
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            const response = await api.put('/system/settings', settings);
+            setSettings(response.data);
+            await refreshBranding();
             toast.success('Settings saved successfully!');
         } catch (error) {
             toast.error('Failed to save settings');
@@ -42,10 +57,9 @@ function AdminSettings() {
         }
     };
 
-    const handleReset = () => {
-        if (window.confirm('Are you sure you want to reset all settings to default?')) {
+    const handleReset = async () => {
+        if (await confirmAction('Are you sure you want to reset all settings to default?')) {
             setSettings({
-                siteName: 'UniFlow',
                 enableRegistration: true,
                 enableAppointments: true,
                 enableQueue: true,
@@ -56,6 +70,23 @@ function AdminSettings() {
                 workingHoursStart: '09:00',
                 workingHoursEnd: '17:00'
             });
+            try {
+                const response = await api.put('/system/settings', {
+                    enableRegistration: true,
+                    enableAppointments: true,
+                    enableQueue: true,
+                    enableDocuments: true,
+                    maintenanceMode: false,
+                    maxAppointmentsPerDay: 50,
+                    defaultSlotDuration: 30,
+                    workingHoursStart: '09:00',
+                    workingHoursEnd: '17:00'
+                });
+                setSettings(response.data);
+            } catch (error) {
+                toast.error('Failed to reset settings');
+                return;
+            }
             toast.success('Settings reset to default');
         }
     };
@@ -84,7 +115,7 @@ function AdminSettings() {
 
     return (
         <AdminLayout>
-            <div className="mb-8">
+            <div className="sticky top-0 z-20 -mx-4 mb-8 bg-white/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 dark:bg-slate-900/95">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">System Settings</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">Configure system-wide settings and preferences.</p>
             </div>
@@ -95,17 +126,6 @@ function AdminSettings() {
                     <div className="mb-8">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">General Settings</h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Site Name</label>
-                                <input
-                                    type="text"
-                                    name="siteName"
-                                    value={settings.siteName}
-                                    onChange={handleChange}
-                                    className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
-                                    placeholder="Enter site name"
-                                />
-                            </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Default Slot Duration (minutes)</label>
                                 <input

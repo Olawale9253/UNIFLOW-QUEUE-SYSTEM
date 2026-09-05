@@ -147,7 +147,7 @@ function AdminReports() {
         labels: appointmentData.map(item => item[0]),
         datasets: [
             {
-                label: 'Appointment Management',
+                label: 'Appointment',
                 data: appointmentData.map(item => item[1]),
                 backgroundColor: 'rgba(54, 162, 235, 0.6)',
                 borderColor: 'rgba(54, 162, 235, 1)',
@@ -287,7 +287,7 @@ function AdminReports() {
 
     return (
         <AdminLayout>
-            <div className="mb-8">
+            <div className="sticky top-0 z-20 -mx-4 mb-8 bg-white/95 px-4 py-2 backdrop-blur sm:-mx-6 sm:px-6 dark:bg-slate-900/95">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Reports & Analytics</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View system statistics and analytics.</p>
             </div>

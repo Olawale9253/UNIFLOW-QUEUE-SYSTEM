@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
 import UserAvatar from '../../components/common/UserAvatar';
 
 function AdminStaff() {
@@ -94,7 +95,7 @@ function AdminStaff() {
     };
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to remove this staff member?')) return;
+        if (!(await confirmAction('Are you sure you want to remove this staff member?'))) return;
 
         try {
             // Deactivate instead of delete
@@ -145,9 +146,9 @@ function AdminStaff() {
 
     return (
         <AdminLayout>
-            <div className="mb-8 flex justify-between items-center">
+            <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Staff Management</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Staff</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">Create and manage staff members.</p>
                 </div>
                 <button

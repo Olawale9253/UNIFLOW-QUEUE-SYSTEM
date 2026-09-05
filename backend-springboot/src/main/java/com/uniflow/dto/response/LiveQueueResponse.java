@@ -6,6 +6,7 @@ public class LiveQueueResponse {
     private Long officeId;
     private String officeName;
     private String currentServing;
+    private QueueResponse currentServingTicket;
     private Long waitingCount;
     private Integer averageWaitTime;
     private List<QueueResponse> waitingTickets;
@@ -15,10 +16,12 @@ public class LiveQueueResponse {
 
     // Parameterized constructor
     public LiveQueueResponse(Long officeId, String officeName, String currentServing,
+                             QueueResponse currentServingTicket,
                              Long waitingCount, Integer averageWaitTime, List<QueueResponse> waitingTickets) {
         this.officeId = officeId;
         this.officeName = officeName;
         this.currentServing = currentServing;
+        this.currentServingTicket = currentServingTicket;
         this.waitingCount = waitingCount;
         this.averageWaitTime = averageWaitTime;
         this.waitingTickets = waitingTickets;
@@ -33,6 +36,9 @@ public class LiveQueueResponse {
 
     public String getCurrentServing() { return currentServing; }
     public void setCurrentServing(String currentServing) { this.currentServing = currentServing; }
+
+    public QueueResponse getCurrentServingTicket() { return currentServingTicket; }
+    public void setCurrentServingTicket(QueueResponse currentServingTicket) { this.currentServingTicket = currentServingTicket; }
 
     public Long getWaitingCount() { return waitingCount; }
     public void setWaitingCount(Long waitingCount) { this.waitingCount = waitingCount; }

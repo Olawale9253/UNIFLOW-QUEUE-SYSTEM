@@ -1,0 +1,17 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../api/axiosConfig';
+import StaffLayout from '../../components/staff/StaffLayout';
+import toast from 'react-hot-toast';
+
+function StaffProfile() {
+    const { user } = useAuth();
+    const [profile, setProfile] = useState({ fullName: user?.fullName || '', phone: user?.phone || '' });
+    const [passwords, setPasswords] = useState({ currentPassword: '', newPassword: '' });
+    const [saving, setSaving] = useState(false);
+    const updateProfile = async (event) => { event.preventDefault(); setSaving(true); try { await api.put('/users/profile', null, { params: profile }); localStorage.setItem('user', JSON.stringify({ ...user, ...profile })); toast.success('Profile updated'); } catch (error) { toast.error(error.response?.data?.message || 'Unable to update profile'); } finally { setSaving(false); } };
+    const changePassword = async (event) => { event.preventDefault(); try { await api.put('/users/change-password', passwords); setPasswords({ currentPassword: '', newPassword: '' }); toast.success('Password changed'); } catch (error) { toast.error(error.response?.data?.message || 'Unable to change password'); } };
+    return <StaffLayout><div className="mb-8"><h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Profile</h1><p className="mt-1 text-gray-600 dark:text-gray-400">Keep your staff account details up to date.</p></div><div className="grid max-w-4xl gap-6 lg:grid-cols-2"><form onSubmit={updateProfile} className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800"><h2 className="mb-5 text-lg font-semibold dark:text-white">Profile details</h2><label className="mb-4 block text-sm text-gray-600 dark:text-gray-300">Full name<input value={profile.fullName} onChange={(event) => setProfile({ ...profile, fullName: event.target.value })} className="mt-1 w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-gray-700 dark:text-white" required /></label><label className="mb-4 block text-sm text-gray-600 dark:text-gray-300">Phone<input value={profile.phone} onChange={(event) => setProfile({ ...profile, phone: event.target.value })} className="mt-1 w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-gray-700 dark:text-white" /></label><p className="mb-5 text-sm text-gray-500">Email: {user?.email}</p><button disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 text-white">{saving ? 'Saving...' : 'Update profile'}</button></form><form onSubmit={changePassword} className="rounded-xl bg-white p-6 shadow-sm dark:bg-gray-800"><h2 className="mb-5 text-lg font-semibold dark:text-white">Change password</h2>{['currentPassword', 'newPassword'].map((field) => <label key={field} className="mb-4 block text-sm text-gray-600 dark:text-gray-300">{field === 'currentPassword' ? 'Current password' : 'New password'}<input type="password" value={passwords[field]} onChange={(event) => setPasswords({ ...passwords, [field]: event.target.value })} className="mt-1 w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-gray-700 dark:text-white" required minLength={6} /></label>)}<button className="rounded-lg bg-slate-900 px-4 py-2 text-white dark:bg-slate-600">Change password</button></form></div></StaffLayout>;
+}
+
+export default StaffProfile;

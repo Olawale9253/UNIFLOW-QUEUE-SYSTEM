@@ -1,0 +1,40 @@
+import React from 'react';
+import { useAuth } from '../../context/AuthContext';
+
+function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) {
+    const { user } = useAuth();
+
+    const getGreeting = () => {
+        const hour = new Date().getHours();
+        if (hour < 12) return 'Good morning';
+        if (hour < 18) return 'Good afternoon';
+        return 'Good evening';
+    };
+
+    const getFirstName = () => user?.fullName?.split(' ')[0] || 'there';
+    return (
+        <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-6 lg:px-8 lg:rounded-bl-3xl">
+            <div className="flex min-h-14 items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-3">
+                    <button
+                        onClick={onToggleSidebar}
+                        className="shrink-0 rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-800"
+                        aria-label={sidebarLabel}
+                        title="Toggle navigation"
+                    >
+                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <div className="min-w-0">
+                        <p className="greeting-text truncate text-[10px] font-semibold uppercase tracking-widest text-blue-600 sm:text-xs">{workspace}</p>
+                        <h1 className="greeting-text truncate text-lg font-bold text-black dark:text-white sm:text-xl">{getGreeting()}, {getFirstName()}</h1>
+                        <p className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">{subtitle}</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+}
+
+export default GreetingHeader;

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import StaffLayout from '../../components/staff/StaffLayout';
 import toast from 'react-hot-toast';
+import { confirmAction } from '../../utils/notifications';
 
 function StaffQueue() {
     const [offices, setOffices] = useState([]);
@@ -16,6 +17,8 @@ function StaffQueue() {
     useEffect(() => {
         if (selectedOffice) {
             fetchQueue();
+            const interval = setInterval(fetchQueue, 10000);
+            return () => clearInterval(interval);
         }
     }, [selectedOffice]);
 
@@ -63,7 +66,7 @@ function StaffQueue() {
     };
 
     const handleSkip = async (ticketId) => {
-        if (!window.confirm('Are you sure you want to skip this ticket?')) return;
+        if (!(await confirmAction('Are you sure you want to skip this ticket?'))) return;
         try {
             await api.put(`/queues/skip/${ticketId}`);
             toast.success('Ticket skipped');
@@ -127,6 +130,22 @@ function StaffQueue() {
                         {queues?.currentServing || 'None'}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Waiting: {queues?.waitingCount || 0}</p>
+                    {queues?.currentServingTicket && (
+                        <div className="mt-4 flex justify-center gap-2">
+                            <button
+                                onClick={() => handleComplete(queues.currentServingTicket.id)}
+                                className="bg-green-600 dark:bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-700 dark:hover:bg-green-600 transition"
+                            >
+                                Complete Service
+                            </button>
+                            <button
+                                onClick={() => handleSkip(queues.currentServingTicket.id)}
+                                className="bg-yellow-600 dark:bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 dark:hover:bg-yellow-600 transition"
+                            >
+                                Skip
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -144,12 +163,6 @@ function StaffQueue() {
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Est. Wait: {ticket.estimatedWaitTime} min</p>
                                 </div>
                                 <div className="flex space-x-2">
-                                    <button
-                                        onClick={() => handleComplete(ticket.id)}
-                                        className="bg-green-600 dark:bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-700 dark:hover:bg-green-600 transition"
-                                    >
-                                        Complete
-                                    </button>
                                     <button
                                         onClick={() => handleSkip(ticket.id)}
                                         className="bg-yellow-600 dark:bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700 dark:hover:bg-yellow-600 transition"
