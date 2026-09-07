@@ -1,0 +1,3 @@
+ALTER TABLE users ADD COLUMN IF NOT EXISTS office_id BIGINT REFERENCES offices(id) ON DELETE SET NULL;
+
+CREATE INDEX IF NOT EXISTS idx_users_office ON users(office_id);

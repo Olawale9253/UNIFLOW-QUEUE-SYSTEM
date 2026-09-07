@@ -12,6 +12,7 @@ public class DashboardStatsResponse {
     private Double averageWaitTime;
     private Long totalOffices;
     private Long totalServices;
+    private Long totalStaff;
 
     // Default constructor
     public DashboardStatsResponse() {}
@@ -49,4 +50,7 @@ public class DashboardStatsResponse {
 
     public Long getTotalServices() { return totalServices; }
     public void setTotalServices(Long totalServices) { this.totalServices = totalServices; }
+
+    public Long getTotalStaff() { return totalStaff; }
+    public void setTotalStaff(Long totalStaff) { this.totalStaff = totalStaff; }
 }

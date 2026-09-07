@@ -10,23 +10,26 @@ function AdminStaff() {
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingStaff, setEditingStaff] = useState(null);
+    const [offices, setOffices] = useState([]);
     const [formData, setFormData] = useState({
         fullName: '',
         email: '',
         phone: '',
         matriculationNumber: '',
         password: '',
-        role: 'STAFF'
+        role: 'STAFF',
+        officeId: ''
     });
 
     useEffect(() => {
         fetchStaff();
+        api.get('/offices/active').then(response => setOffices(response.data)).catch(() => toast.error('Failed to load offices'));
     }, []);
 
     const fetchStaff = async () => {
         try {
             const response = await api.get('/users');
-            const staffUsers = response.data.filter(u => u.role === 'STAFF');
+            const staffUsers = response.data.filter(u => u.role === 'STAFF' && u.active !== false);
             setStaff(staffUsers);
         } catch (error) {
             console.error('Error fetching staff:', error);
@@ -40,7 +43,7 @@ function AdminStaff() {
         e.preventDefault();
 
         // Validate form
-        if (!formData.fullName || !formData.email || !formData.password) {
+        if (!formData.fullName || !formData.email || (!editingStaff && !formData.password)) {
             toast.error('Please fill all required fields');
             return;
         }
@@ -51,29 +54,28 @@ function AdminStaff() {
                 await api.put(`/users/${editingStaff.id}`, {
                     fullName: formData.fullName,
                     phone: formData.phone,
-                    email: formData.email
+                    email: formData.email,
+                    officeId: formData.officeId,
                 });
                 toast.success('Staff updated successfully');
             } else {
                 // Create new staff via registration
                 const staffData = {
-                    matriculationNumber: formData.matriculationNumber || `STAFF/${Date.now()}`,
+                    matriculationNumber: `STAFF-${Date.now()}`,
                     email: formData.email,
                     password: formData.password,
                     fullName: formData.fullName,
                     phone: formData.phone,
-                    role: 'STAFF'
+                    role: 'STAFF',
                 };
 
-                // Register the user as STAFF
-                await api.post('/auth/register', staffData);
-
-                // Update role to STAFF (in case registration defaults to STUDENT)
-                const usersRes = await api.get('/users');
-                const newUser = usersRes.data.find(u => u.email === formData.email);
-                if (newUser) {
-                    await api.put(`/users/${newUser.id}/role`, { role: 'STAFF' });
-                }
+                // Register the user as STAFF so the response gives us its ID immediately.
+                const registrationResponse = await api.post('/auth/register', staffData);
+                const newUserId = registrationResponse.data.userId;
+                await Promise.all([
+                    api.put(`/users/${newUserId}`, { officeId: formData.officeId }),
+                    api.put(`/users/${newUserId}/approve`)
+                ]);
 
                 toast.success('Staff member created successfully');
             }
@@ -86,7 +88,8 @@ function AdminStaff() {
                 phone: '',
                 matriculationNumber: '',
                 password: '',
-                role: 'STAFF'
+                role: 'STAFF',
+                officeId: ''
             });
             fetchStaff();
         } catch (error) {
@@ -115,10 +118,13 @@ function AdminStaff() {
             phone: staffMember.phone || '',
             matriculationNumber: staffMember.matriculationNumber || '',
             password: '', // Password not shown for editing
-            role: 'STAFF'
+            role: 'STAFF',
+            officeId: staffMember.officeId || ''
         });
         setShowModal(true);
     };
+
+    const isOfficeAssigned = (officeId) => staff.some(member => member.officeId === Number(officeId) && member.id !== editingStaff?.id);
 
     const getInitials = (name) => {
         if (name) {
@@ -160,7 +166,8 @@ function AdminStaff() {
                             phone: '',
                             matriculationNumber: '',
                             password: '',
-                            role: 'STAFF'
+                            role: 'STAFF',
+                            officeId: ''
                         });
                         setShowModal(true);
                     }}
@@ -173,7 +180,7 @@ function AdminStaff() {
             {/* Staff Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {staff.map((member) => (
-                    <div key={member.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
+                    <div key={member.id} className="flex h-full flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div className="flex items-start justify-between">
                             <div className="flex items-center space-x-3">
                                 <UserAvatar user={member} size="lg" className="h-12 w-12 rounded-full bg-blue-500 text-lg" fallback="S" />
@@ -187,21 +194,24 @@ function AdminStaff() {
                                 <button
                                     onClick={() => handleEdit(member)}
                                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                                    aria-label={`Edit ${member.fullName}`}
+                                    title="Edit staff member"
                                 >
-                                    ✏️
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="m4 16 9.5-9.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /><path strokeLinecap="round" d="m14 6 4 4" /></svg>
                                 </button>
                                 <button
                                     onClick={() => handleDelete(member.id)}
                                     className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                                    aria-label={`Deactivate ${member.fullName}`}
+                                    title="Deactivate staff member"
                                 >
-                                    🗑️
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                                 </button>
                             </div>
                         </div>
-                        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                                Phone: {member.phone || 'N/A'}
-                            </p>
+                        <div className="mt-auto border-t border-gray-200 pt-4 dark:border-gray-700">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Assigned office: {member.officeName || 'Not assigned'}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Phone: {member.phone || 'N/A'}</p>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Status: <span className="text-green-600 dark:text-green-400 font-medium">Active</span>
                             </p>
@@ -219,10 +229,13 @@ function AdminStaff() {
             {/* Add/Edit Staff Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                            {editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
-                        </h2>
+                    <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl bg-white p-6 dark:bg-gray-800">
+                        <div className="mb-6 flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">{editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}</h2>
+                            <button type="button" onClick={() => { setShowModal(false); setEditingStaff(null); }} className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white" aria-label="Close staff form" title="Close">
+                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="m6 6 12 12M18 6 6 18" /></svg>
+                            </button>
+                        </div>
                         <form onSubmit={handleSubmit}>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name *</label>
@@ -257,14 +270,11 @@ function AdminStaff() {
                                 />
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Staff ID</label>
-                                <input
-                                    type="text"
-                                    value={formData.matriculationNumber}
-                                    onChange={(e) => setFormData({ ...formData, matriculationNumber: e.target.value })}
-                                    className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
-                                    placeholder="STAFF/001"
-                                />
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Assigned office *</label>
+                                <select value={formData.officeId} onChange={(e) => setFormData({ ...formData, officeId: e.target.value })} className="w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                    <option value="">Select an office</option>
+                                    {offices.map(office => <option key={office.id} value={office.id} disabled={isOfficeAssigned(office.id)}>{office.name}{isOfficeAssigned(office.id) ? ' (assigned)' : ''}</option>)}
+                                </select>
                             </div>
                             {!editingStaff && (
                                 <div className="mb-4">
@@ -278,13 +288,6 @@ function AdminStaff() {
                                         required={!editingStaff}
                                         minLength="6"
                                     />
-                                </div>
-                            )}
-                            {editingStaff && (
-                                <div className="mb-4">
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        Leave password blank to keep current password
-                                    </p>
                                 </div>
                             )}
                             <div className="flex space-x-3">

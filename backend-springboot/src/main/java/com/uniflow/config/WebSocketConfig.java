@@ -20,7 +20,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         System.out.println("✅ WebSocketConfig is being loaded!");
         registry.addHandler(queueWebSocketHandler, "/ws")
-                .setAllowedOrigins("*");
+            .setAllowedOrigins("*")
+            .withSockJS();
         System.out.println("✅ WebSocket handler registered at /ws");
     }
 }

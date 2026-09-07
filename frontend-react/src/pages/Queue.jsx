@@ -14,6 +14,10 @@ function Queue() {
     const [liveQueues, setLiveQueues] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    const queueBlocked = myTickets.some(ticket =>
+        ticket.status === 'CALLED' || (ticket.status === 'WAITING' && ticket.position <= 2)
+    );
+
     useEffect(() => {
         fetchData();
         const interval = setInterval(fetchLiveQueues, 10000);
@@ -33,7 +37,7 @@ function Queue() {
                 new Map(officesRes.data.map(office => [office.id, office])).values()
             );
             setOffices(uniqueOffices);
-            setMyTickets(ticketsRes.data);
+            setMyTickets((ticketsRes.data || []).filter(ticket => ['WAITING', 'CALLED'].includes(ticket.status)));
             setLiveQueues(liveQueuesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -76,6 +80,11 @@ function Queue() {
         e.preventDefault();
         if (!selectedOffice || !selectedService) {
             toast.error('Please select an office and service');
+            return;
+        }
+
+        if (queueBlocked) {
+            toast.error('Your queue turn is near. Please complete it before joining another queue.');
             return;
         }
 
@@ -163,10 +172,16 @@ function Queue() {
                         </div>
                         <button
                             type="submit"
-                            className="btn-primary w-full"
+                            disabled={queueBlocked}
+                            className="btn-primary w-full disabled:opacity-50"
                         >
-                            Join Queue
+                            {queueBlocked ? 'Queue turn is near' : 'Join Queue'}
                         </button>
+                        {queueBlocked && (
+                            <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                                Complete your current queue turn before joining another queue.
+                            </p>
+                        )}
                     </form>
                 </div>
 
@@ -188,7 +203,7 @@ function Queue() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleReschedule(ticket.id)}
-                                                className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                                                className="mt-3 text-sm text-blue-600 dark:text-blue-400"
                                             >
                                                 Reschedule turn
                                             </button>

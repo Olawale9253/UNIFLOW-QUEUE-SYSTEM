@@ -16,7 +16,7 @@ public class SystemSettings {
     private Long id = 1L;
 
     @Column(name = "site_name", nullable = false)
-    private String siteName = "LAGOS STATE UNIVERSITY, LAGOS";
+    private String siteName = "UniFlow";
 
     @Lob
     @Column(name = "logo_url", columnDefinition = "TEXT")

@@ -58,11 +58,12 @@ public class AuthServiceImpl implements AuthService {
         user.setMatriculationNumber(request.getMatriculationNumber());
 
         String role = request.getRole() != null ? request.getRole() : "STUDENT";
-        if (!Arrays.asList("STUDENT", "STAFF", "ADMIN").contains(role)) {
+        if (!Arrays.asList("STUDENT", "STAFF").contains(role)) {
             role = "STUDENT";
         }
         user.setRole(role);
         user.setActive(true);
+        user.setApproved(false);
 
         User savedUser = userRepository.save(user);
 
@@ -73,10 +74,8 @@ public class AuthServiceImpl implements AuthService {
             System.err.println("Failed to send welcome email: " + e.getMessage());
         }
 
-        String token = jwtTokenProvider.generateToken(savedUser);
-
         return new AuthResponse(
-                token,
+            null,
                 "Bearer",
                 savedUser.getId(),
                 savedUser.getEmail(),
@@ -89,6 +88,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+
+        if (!user.isApproved()) {
+            throw new UnauthorizedException("Your account is awaiting admin approval");
+        }
 
         if (!user.isActive()) {
             throw new UnauthorizedException("Account is deactivated");

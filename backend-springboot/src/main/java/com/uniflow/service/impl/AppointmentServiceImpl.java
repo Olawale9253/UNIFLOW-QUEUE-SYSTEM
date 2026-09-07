@@ -10,19 +10,22 @@ import com.uniflow.model.OfficeService;
 import com.uniflow.model.User;
 import com.uniflow.repository.AppointmentRepository;
 import com.uniflow.repository.OfficeRepository;
+import com.uniflow.repository.QueueTicketRepository;
 import com.uniflow.repository.ServiceRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.AppointmentService;
 import com.uniflow.service.NotificationService;
+import org.springframework.lang.NonNull;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +35,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
     private final ServiceRepository serviceRepository;
+    private final QueueTicketRepository queueTicketRepository;
     private final NotificationService notificationService;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -40,30 +44,48 @@ public class AppointmentServiceImpl implements AppointmentService {
                                   UserRepository userRepository,
                                   OfficeRepository officeRepository,
                                   ServiceRepository serviceRepository,
+                                  QueueTicketRepository queueTicketRepository,
                                   NotificationService notificationService) {
         this.appointmentRepository = appointmentRepository;
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
         this.serviceRepository = serviceRepository;
+        this.queueTicketRepository = queueTicketRepository;
         this.notificationService = notificationService;
     }
 
     @Override
     @Transactional
-    public AppointmentResponse bookAppointment(AppointmentRequest request, Long userId) {
+    public AppointmentResponse bookAppointment(@NonNull AppointmentRequest request, @NonNull Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        Office office = officeRepository.findById(request.getOfficeId())
+        Long officeId = Objects.requireNonNull(request.getOfficeId(), "Office ID is required");
+        Long serviceId = Objects.requireNonNull(request.getServiceId(), "Service ID is required");
+
+        Office office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
 
-        OfficeService service = serviceRepository.findById(request.getServiceId())
+        OfficeService service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
         LocalDateTime appointmentTime = request.getAppointmentTime();
 
         if (appointmentTime.isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Cannot book appointment in the past");
+        }
+
+        boolean hasActiveAppointment = appointmentRepository.findByStudentId(userId).stream()
+                .anyMatch(existing -> existing.getOffice().getId().equals(office.getId())
+                        && existing.getService().getId().equals(service.getId())
+                        && !existing.getStatus().equals("COMPLETED")
+                        && !existing.getStatus().equals("CANCELLED"));
+        if (hasActiveAppointment) {
+            throw new BadRequestException("You already have an active appointment for this office and service. Please complete or cancel it first.");
+        }
+
+        if (hasQueueNearTurn(userId)) {
+            throw new BadRequestException("Your queue turn is near. Please complete it before booking an appointment.");
         }
 
         if (appointmentRepository.existsByOfficeIdAndAppointmentTime(office.getId(), appointmentTime)) {
@@ -99,7 +121,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse confirmAppointment(Long appointmentId) {
+    public AppointmentResponse confirmAppointment(@NonNull Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
@@ -120,7 +142,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse completeAppointment(Long appointmentId) {
+    public AppointmentResponse completeAppointment(@NonNull Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
         if (appointment.getStatus().equals("CANCELLED")) {
@@ -132,7 +154,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse cancelAppointmentByStaff(Long appointmentId) {
+    public AppointmentResponse cancelAppointmentByStaff(@NonNull Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
         if (appointment.getStatus().equals("COMPLETED") || appointment.getStatus().equals("CANCELLED")) {
@@ -143,14 +165,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public AppointmentResponse getAppointment(Long appointmentId) {
+    public AppointmentResponse getAppointment(@NonNull Long appointmentId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
         return mapToAppointmentResponse(appointment);
     }
 
     @Override
-    public List<AppointmentResponse> getUserAppointments(Long userId) {
+    public List<AppointmentResponse> getUserAppointments(@NonNull Long userId) {
         List<Appointment> appointments = appointmentRepository.findByStudentId(userId);
         return appointments.stream()
                 .map(this::mapToAppointmentResponse)
@@ -158,7 +180,14 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<AppointmentResponse> getOfficeAppointments(Long officeId) {
+    public List<AppointmentResponse> getAllAppointments() {
+        return appointmentRepository.findAll().stream()
+                .map(this::mapToAppointmentResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AppointmentResponse> getOfficeAppointments(@NonNull Long officeId) {
         List<Appointment> appointments = appointmentRepository.findByOfficeId(officeId);
         return appointments.stream()
                 .map(this::mapToAppointmentResponse)
@@ -167,7 +196,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse cancelAppointment(Long appointmentId, Long userId) {
+    public AppointmentResponse cancelAppointment(@NonNull Long appointmentId, @NonNull Long userId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
@@ -175,8 +204,8 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new BadRequestException("You are not authorized to cancel this appointment");
         }
 
-        if (appointment.getStatus().equals("COMPLETED") || appointment.getStatus().equals("CANCELLED")) {
-            throw new BadRequestException("Appointment cannot be cancelled");
+        if (!appointment.getStatus().equals("PENDING")) {
+            throw new BadRequestException("Only pending appointments can be cancelled by the student");
         }
 
         appointment.setStatus("CANCELLED");
@@ -187,7 +216,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     @Override
     @Transactional
-    public AppointmentResponse rescheduleAppointment(Long appointmentId, LocalDateTime newTime, Long userId) {
+    public AppointmentResponse rescheduleAppointment(@NonNull Long appointmentId, @NonNull LocalDateTime newTime, @NonNull Long userId) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment not found"));
 
@@ -216,7 +245,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public List<LocalDateTime> getAvailableSlots(Long officeId, LocalDate date) {
+    public List<LocalDateTime> getAvailableSlots(@NonNull Long officeId, @Nullable LocalDate date) {
         List<LocalDateTime> availableSlots = new ArrayList<>();
 
         try {
@@ -231,8 +260,8 @@ public class AppointmentServiceImpl implements AppointmentService {
             LocalDateTime endTime = date.atTime(17, 0);
             List<LocalDateTime> bookedTimes = appointmentRepository.findByOfficeId(office.getId())
                     .stream()
-                    .filter(appointment -> appointment.getStatus() != null && !"CANCELLED".equalsIgnoreCase(appointment.getStatus()))
-                    .map(Appointment::getAppointmentTime)
+                    .filter(appointment -> appointment != null && appointment.getStatus() != null && !"CANCELLED".equalsIgnoreCase(appointment.getStatus()))
+                    .map(appointment -> appointment != null ? appointment.getAppointmentTime() : null)
                     .filter(slot -> slot != null && slot.toLocalDate().equals(date))
                     .collect(Collectors.toList());
 
@@ -251,6 +280,14 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
 
         return availableSlots;
+    }
+
+    private boolean hasQueueNearTurn(Long userId) {
+        return queueTicketRepository.findByStudentId(userId).stream()
+                .anyMatch(ticket -> ticket.getStatus().equals("CALLED")
+                        || (ticket.getStatus().equals("WAITING")
+                        && ticket.getPosition() != null
+                        && ticket.getPosition() <= 2));
     }
 
     private boolean isWithinWorkingHours(Office office, LocalDateTime appointmentTime) {

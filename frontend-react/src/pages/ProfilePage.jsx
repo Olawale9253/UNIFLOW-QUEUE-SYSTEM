@@ -13,9 +13,7 @@ const Profile = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const response = await api.put('/users/profile', null, {
-                params: { fullName, phone }
-            });
+            const response = await api.put('/users/profile', { fullName, phone });
             toast.success('Profile updated successfully');
             // Update user in localStorage
             const updatedUser = { ...user, fullName, phone };

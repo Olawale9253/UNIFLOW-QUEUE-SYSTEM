@@ -9,6 +9,7 @@ import com.uniflow.model.Office;
 import com.uniflow.model.User;
 import com.uniflow.repository.DocumentRequestRepository;
 import com.uniflow.repository.OfficeRepository;
+import com.uniflow.repository.QueueTicketRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.DocumentService;
 import com.uniflow.service.NotificationService;
@@ -26,6 +27,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRequestRepository documentRequestRepository;
     private final UserRepository userRepository;
     private final OfficeRepository officeRepository;
+    private final QueueTicketRepository queueTicketRepository;
     private final NotificationService notificationService;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
@@ -33,10 +35,12 @@ public class DocumentServiceImpl implements DocumentService {
     public DocumentServiceImpl(DocumentRequestRepository documentRequestRepository,
                                UserRepository userRepository,
                                OfficeRepository officeRepository,
+                               QueueTicketRepository queueTicketRepository,
                                NotificationService notificationService) {
         this.documentRequestRepository = documentRequestRepository;
         this.userRepository = userRepository;
         this.officeRepository = officeRepository;
+        this.queueTicketRepository = queueTicketRepository;
         this.notificationService = notificationService;
     }
 
@@ -62,6 +66,18 @@ public class DocumentServiceImpl implements DocumentService {
             throw new BadRequestException("Document type cannot be empty");
         }
 
+        boolean hasActiveDocument = documentRequestRepository.findByStudentId(userId).stream()
+                .anyMatch(existing -> existing.getOffice().getId().equals(office.getId())
+                        && existing.getDocumentType().equals(request.getDocumentType())
+                        && isActiveDocumentStatus(existing.getStatus()));
+        if (hasActiveDocument) {
+            throw new BadRequestException("You already have an active request for this office and document type. Please wait until it is completed or rejected.");
+        }
+
+        if (hasQueueNearTurn(userId)) {
+            throw new BadRequestException("Your queue turn is near. Please complete it before making another request.");
+        }
+
         // Generate tracking number
         String trackingNumber = generateTrackingNumber();
 
@@ -81,6 +97,12 @@ public class DocumentServiceImpl implements DocumentService {
         System.out.println("  Tracking Number: " + trackingNumber);
 
         DocumentRequest savedRequest = documentRequestRepository.save(documentRequest);
+        notificationService.createNotification(
+            user.getId(),
+            "Document request submitted",
+            "Your " + request.getDocumentType().replace('_', ' ') + " request was submitted successfully.",
+            "document"
+        );
 
         return mapToDocumentResponse(savedRequest);
     }
@@ -153,6 +175,18 @@ public class DocumentServiceImpl implements DocumentService {
                 status.equals("READY_FOR_COLLECTION") ||
                 status.equals("COMPLETED") ||
                 status.equals("REJECTED");
+    }
+
+    private boolean isActiveDocumentStatus(String status) {
+        return !status.equals("COMPLETED") && !status.equals("REJECTED");
+    }
+
+    private boolean hasQueueNearTurn(Long userId) {
+        return queueTicketRepository.findByStudentId(userId).stream()
+                .anyMatch(ticket -> ticket.getStatus().equals("CALLED")
+                        || (ticket.getStatus().equals("WAITING")
+                        && ticket.getPosition() != null
+                        && ticket.getPosition() <= 2));
     }
 
     private DocumentResponse mapToDocumentResponse(DocumentRequest request) {

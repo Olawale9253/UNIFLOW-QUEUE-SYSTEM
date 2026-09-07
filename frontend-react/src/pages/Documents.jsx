@@ -14,6 +14,7 @@ function Documents() {
     const [trackedDocument, setTrackedDocument] = useState(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [queueBlocked, setQueueBlocked] = useState(false);
 
     const documentTypes = [
         'TRANSCRIPT',
@@ -25,17 +26,35 @@ function Documents() {
         'OTHER'
     ];
 
+    const getStatusColor = (status) => {
+        const colors = {
+            SUBMITTED: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+            UNDER_REVIEW: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-200',
+            PROCESSING: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200',
+            READY_FOR_COLLECTION: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200',
+            COMPLETED: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200',
+            REJECTED: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200'
+        };
+        return colors[status] || colors.COMPLETED;
+    };
+
     useEffect(() => {
         fetchData();
     }, []);
 
     const fetchData = async () => {
         try {
-            const [documentsRes, officesRes] = await Promise.all([
+            const [documentsRes, officesRes, queuesRes] = await Promise.all([
                 api.get('/documents/my-requests'),
-                api.get('/offices/active')
+                api.get('/offices/active'),
+                api.get('/queues/my-tickets')
             ]);
-            setDocuments(documentsRes.data);
+            setDocuments((documentsRes.data || []).filter(document =>
+                ['SUBMITTED', 'UNDER_REVIEW', 'PROCESSING'].includes(document.status)
+            ));
+            setQueueBlocked((queuesRes.data || []).some(ticket =>
+                ticket.status === 'CALLED' || (ticket.status === 'WAITING' && ticket.position <= 2)
+            ));
             const uniqueOffices = Array.from(
                 new Map(officesRes.data.map(office => [office.id, office])).values()
             );
@@ -52,6 +71,21 @@ function Documents() {
         e.preventDefault();
         if (!selectedOffice || !documentType) {
             toast.error('Please select an office and document type');
+            return;
+        }
+
+        if (queueBlocked) {
+            toast.error('Your queue turn is near. Please complete it before making another request.');
+            return;
+        }
+
+        const hasActiveDocument = documents.some(document =>
+            document.officeName === offices.find(office => String(office.id) === selectedOffice)?.name
+            && document.documentType === documentType
+            && !['COMPLETED', 'REJECTED'].includes(document.status)
+        );
+        if (hasActiveDocument) {
+            toast.error('You already have an active request for this office and document type.');
             return;
         }
 
@@ -87,30 +121,6 @@ function Documents() {
             toast.error(error.response?.data?.message || 'Document not found');
             setTrackedDocument(null);
         }
-    };
-
-    const getStatusColor = (status) => {
-        const colors = {
-            'SUBMITTED': 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300',
-            'UNDER_REVIEW': 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300',
-            'PROCESSING': 'bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300',
-            'READY_FOR_COLLECTION': 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300',
-            'COMPLETED': 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
-            'REJECTED': 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
-        };
-        return colors[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
-    };
-
-    const getStatusIcon = (status) => {
-        const icons = {
-            'SUBMITTED': '📤',
-            'UNDER_REVIEW': '🔍',
-            'PROCESSING': '⚙️',
-            'READY_FOR_COLLECTION': '📋',
-            'COMPLETED': '✅',
-            'REJECTED': '❌'
-        };
-        return icons[status] || '📄';
     };
 
     if (loading) {
@@ -173,20 +183,25 @@ function Documents() {
                         </div>
                         <button
                             type="submit"
-                            disabled={submitting}
+                            disabled={submitting || queueBlocked}
                             className="btn-primary w-full disabled:opacity-50"
                         >
-                            {submitting ? 'Requesting...' : 'Request Document'}
+                            {queueBlocked ? 'Queue turn is near' : submitting ? 'Requesting...' : 'Request Document'}
                         </button>
+                        {queueBlocked && (
+                            <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                                Complete your current queue turn before making another request.
+                            </p>
+                        )}
                     </form>
                 </div>
 
                 {/* Right Column */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Track Document */}
-                    <div className="user-card">
+                    <div className="user-card self-start lg:sticky lg:top-24">
                         <h2 className="user-card-title">Track Document</h2>
-                        <form onSubmit={handleTrack} className="flex gap-4">
+                        <form onSubmit={handleTrack} className="flex flex-col gap-3 sm:flex-row">
                             <input
                                 type="text"
                                 value={trackingNumber}
@@ -196,7 +211,7 @@ function Documents() {
                             />
                             <button
                                 type="submit"
-                                className="btn-success px-6"
+                                className="btn-success px-6 sm:shrink-0"
                             >
                                 Track
                             </button>
@@ -207,7 +222,7 @@ function Documents() {
                                 <div className="flex items-start justify-between">
                                     <div>
                                         <p className="font-semibold text-gray-900 dark:text-white">
-                                            {getStatusIcon(trackedDocument.status)} {trackedDocument.documentType}
+                                            {trackedDocument.documentType}
                                         </p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Office: {trackedDocument.officeName}</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-400">Tracking: {trackedDocument.trackingNumber}</p>
@@ -215,10 +230,10 @@ function Documents() {
                                             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Comments: {trackedDocument.comments}</p>
                                         )}
                                     </div>
-                                    <div>
-                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(trackedDocument.status)}`}>
-                      {trackedDocument.status}
-                    </span>
+                                                                        <div className="shrink-0">
+                                                                                <span className={`inline-flex min-h-7 items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold tracking-wide ${getStatusColor(trackedDocument.status)}`}>
+                                                                                        {trackedDocument.status.replaceAll('_', ' ')}
+                                                                                </span>
                                     </div>
                                 </div>
                             </div>
@@ -236,11 +251,11 @@ function Documents() {
                         ) : (
                             <div className="space-y-3">
                                 {documents.map((doc) => (
-                                    <div key={doc.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition">
-                                        <div className="flex justify-between items-start">
-                                            <div>
+                                    <div key={doc.id} className="rounded-xl border border-slate-200/80 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-soft dark:border-slate-800 dark:hover:border-blue-900">
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                            <div className="min-w-0">
                                                 <p className="font-semibold text-gray-900 dark:text-white">
-                                                    {getStatusIcon(doc.status)} {doc.documentType}
+                                                    {doc.documentType}
                                                 </p>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">Office: {doc.officeName}</p>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400">Tracking: {doc.trackingNumber}</p>
@@ -251,10 +266,10 @@ function Documents() {
                                                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">Comments: {doc.comments}</p>
                                                 )}
                                             </div>
-                                            <div>
-                        <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(doc.status)}`}>
-                          {doc.status}
-                        </span>
+                                                                                        <div className="shrink-0">
+                                                                                                <span className={`inline-flex min-h-7 items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold tracking-wide ${getStatusColor(doc.status)}`}>
+                                                                                                        {doc.status.replaceAll('_', ' ')}
+                                                                                                </span>
                                             </div>
                                         </div>
                                     </div>

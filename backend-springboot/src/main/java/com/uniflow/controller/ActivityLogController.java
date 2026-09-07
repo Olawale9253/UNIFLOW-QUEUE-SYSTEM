@@ -1,9 +1,11 @@
 package com.uniflow.controller;
 
 import com.uniflow.model.ActivityLog;
+import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import java.util.HashMap;
 import java.util.List;
@@ -23,7 +25,7 @@ public class ActivityLogController {
     public ResponseEntity<List<ActivityLog>> getRecentActivities() {
         System.out.println("📡 GET /activities/recent called");
         try {
-            List<ActivityLog> activities = activityLogService.getRecentActivities(10);
+            List<ActivityLog> activities = activityLogService.getRecentActivities(Integer.MAX_VALUE);
             System.out.println("📊 Found " + activities.size() + " activities");
             return ResponseEntity.ok(activities);
         } catch (Exception e) {
@@ -31,6 +33,12 @@ public class ActivityLogController {
             e.printStackTrace();
             return ResponseEntity.status(500).build();
         }
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<List<ActivityLog>> getMyActivities(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return ResponseEntity.ok(activityLogService.getActivitiesForUser(userDetails.getFullName()));
     }
 
     @PostMapping("/test")

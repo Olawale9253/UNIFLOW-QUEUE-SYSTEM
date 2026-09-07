@@ -1,19 +1,36 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
+import api from '../api/axiosConfig';
+import { useAuth } from './AuthContext';
+import websocketService from '../services/websocketService';
 
 // Create the context
 const WebSocketContext = createContext();
 
 // Provider component
 export function WebSocketProvider({ children }) {
-    const [connected, setConnected] = useState(true);
+    const { user } = useAuth();
+    const [connected, setConnected] = useState(false);
+    const [queueEvents, setQueueEvents] = useState([]);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        toast.success('🔌 Connected to real-time updates');
+        if (!user) {
+            websocketService.disconnect();
+            setConnected(false);
+            setNotifications([]);
+            setUnreadCount(0);
+            setQueueEvents([]);
+            return undefined;
+        }
 
-        // Poll for updates every 10 seconds
+        websocketService.connect(localStorage.getItem('token'));
+        const removeConnectListener = websocketService.on('connect', () => setConnected(true));
+        const removeDisconnectListener = websocketService.on('disconnect', () => setConnected(false));
+        const removeQueueListener = websocketService.on('queue-update', (event) => {
+            setQueueEvents(previous => [event, ...previous].slice(0, 50));
+        });
+
         const interval = setInterval(() => {
             fetchUpdates();
         }, 10000);
@@ -22,22 +39,29 @@ export function WebSocketProvider({ children }) {
 
         return () => {
             clearInterval(interval);
+            removeConnectListener();
+            removeDisconnectListener();
+            removeQueueListener();
+            websocketService.disconnect();
         };
-    }, []);
+    }, [user]);
 
     const fetchUpdates = async () => {
         try {
-            const response = await fetch('http://localhost:8081/api/queues/live/all');
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 Queue update:', data);
-            }
+            const response = await api.get('/notifications');
+            const nextNotifications = (response.data || []).map(notification => ({
+                ...notification,
+                timestamp: notification.createdAt
+            }));
+            setNotifications(nextNotifications);
+            setUnreadCount(nextNotifications.filter(notification => !notification.read).length);
         } catch (error) {
-            console.error('Polling error:', error);
+            console.error('Notification polling error:', error);
         }
     };
 
     const markAllAsRead = () => {
+        api.put('/notifications/read-all').catch(() => {});
         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
         setUnreadCount(0);
     };
@@ -48,6 +72,7 @@ export function WebSocketProvider({ children }) {
     };
 
     const markNotificationAsRead = (id) => {
+        api.put(`/notifications/${id}/read`).catch(() => {});
         setNotifications(prev =>
             prev.map(n => n.id === id ? { ...n, read: true } : n)
         );
@@ -57,6 +82,7 @@ export function WebSocketProvider({ children }) {
     return (
         <WebSocketContext.Provider value={{
             connected,
+            queueEvents,
             notifications,
             unreadCount,
             markAllAsRead,

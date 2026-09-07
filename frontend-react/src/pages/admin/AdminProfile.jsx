@@ -4,9 +4,10 @@ import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import UserAvatar from '../../components/common/UserAvatar';
+import ProfileImagePicker from '../../components/common/ProfileImagePicker';
 
 function AdminProfile() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [editMode, setEditMode] = useState(false);
@@ -46,18 +47,15 @@ function AdminProfile() {
         e.preventDefault();
         setUpdating(true);
         try {
-            await api.put('/users/profile', null, {
-                params: {
-                    fullName: profile.fullName,
-                    phone: profile.phone,
-                    profileImageUrl: profile.profileImageUrl
-                }
+            await api.put('/users/profile', {
+                fullName: profile.fullName,
+                phone: profile.phone,
+                profileImageUrl: profile.profileImageUrl
             });
             toast.success('Profile updated successfully');
             setEditMode(false);
 
-            const updatedUser = { ...user, ...profile };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            updateUser(profile);
 
             await fetchProfile();
         } catch (error) {
@@ -189,14 +187,9 @@ function AdminProfile() {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Role cannot be changed</p>
                                     </div>
                                     <div className="min-w-0 text-left md:col-span-2">
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Profile Image URL</label>
-                                        <input
-                                            type="url"
-                                            name="profileImageUrl"
+                                        <ProfileImagePicker
                                             value={profile.profileImageUrl}
-                                            onChange={handleChange}
-                                            className="input"
-                                            placeholder="https://example.com/profile-image.jpg"
+                                            onChange={(profileImageUrl) => setProfile(prev => ({ ...prev, profileImageUrl }))}
                                         />
                                     </div>
                                 </div>

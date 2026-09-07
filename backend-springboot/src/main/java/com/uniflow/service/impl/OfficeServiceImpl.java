@@ -48,6 +48,7 @@ public class OfficeServiceImpl implements OfficeManagementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public OfficeResponse getOffice(Long officeId) {
         Office office = officeRepository.findById(officeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
@@ -55,6 +56,7 @@ public class OfficeServiceImpl implements OfficeManagementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OfficeResponse> getAllOffices() {
         List<Office> offices = officeRepository.findAll();
         return offices.stream()
@@ -63,6 +65,7 @@ public class OfficeServiceImpl implements OfficeManagementService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<OfficeResponse> getActiveOffices() {
         List<Office> offices = officeRepository.findByActiveTrue();
         return offices.stream()

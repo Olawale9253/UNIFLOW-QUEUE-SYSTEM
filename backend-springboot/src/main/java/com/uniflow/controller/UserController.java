@@ -3,6 +3,7 @@ package com.uniflow.controller;
 import com.uniflow.dto.response.UserResponse;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.UserService;
+import com.uniflow.service.ActivityLogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -16,10 +17,12 @@ import java.util.Map;
 public class UserController {
 
     private final UserService userService;
+    private final ActivityLogService activityLogService;
 
     // Explicit constructor
-    public UserController(UserService userService) {
+    public UserController(UserService userService, ActivityLogService activityLogService) {
         this.userService = userService;
+        this.activityLogService = activityLogService;
     }
 
     @GetMapping("/profile")
@@ -36,8 +39,11 @@ public class UserController {
         String fullName = request.get("fullName");
         String phone = request.get("phone");
         String email = request.get("email");
+        String profileImageUrl = request.get("profileImageUrl");
+        Long officeId = request.get("officeId") == null ? null : Long.valueOf(request.get("officeId"));
 
-        UserResponse response = userService.updateUser(userId, fullName, phone, email);
+        UserResponse response = userService.updateUser(userId, fullName, phone, email, profileImageUrl, officeId);
+        activityLogService.logActivity("Admin", "Updated staff/user: " + response.getFullName(), "admin");
         return ResponseEntity.ok(response);
     }
 
@@ -59,18 +65,17 @@ public class UserController {
             @RequestBody Map<String, String> request) {
         String newRole = request.get("role");
         UserResponse response = userService.updateUserRole(userId, newRole);
+        activityLogService.logActivity("Admin", "Updated role for user ID " + userId + " to " + newRole, "admin");
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/profile")
     public ResponseEntity<UserResponse> updateProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam(required = false) String fullName,
-            @RequestParam(required = false) String phone,
-            @RequestParam(required = false) String matriculationNumber,
-            @RequestParam(required = false) String profileImageUrl) {
+            @RequestBody Map<String, String> request) {
         UserResponse response = userService.updateUserProfile(
-                userDetails.getId(), fullName, phone, matriculationNumber, profileImageUrl);
+                userDetails.getId(), request.get("fullName"), request.get("phone"),
+                null, request.get("profileImageUrl"));
         return ResponseEntity.ok(response);
     }
 
@@ -81,6 +86,11 @@ public class UserController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/office/{officeId}/staff")
+    public ResponseEntity<List<UserResponse>> getStaffByOffice(@PathVariable Long officeId) {
+        return ResponseEntity.ok(userService.getStaffByOffice(officeId));
+    }
+
     @PutMapping("/{userId}/activate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> activateUser(@PathVariable Long userId) {
@@ -88,10 +98,27 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
+    @PutMapping("/{userId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> approveUser(@PathVariable Long userId) {
+        UserResponse response = userService.approveUser(userId);
+        activityLogService.logActivity("Admin", "Approved account: " + response.getFullName(), "admin");
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{userId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> rejectUser(@PathVariable Long userId) {
+        UserResponse response = userService.rejectUser(userId);
+        activityLogService.logActivity("Admin", "Rejected account: " + response.getFullName(), "admin");
+        return ResponseEntity.ok(response);
+    }
+
     @PutMapping("/{userId}/deactivate")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<UserResponse> deactivateUser(@PathVariable Long userId) {
         UserResponse response = userService.deactivateUser(userId);
+        activityLogService.logActivity("Admin", "Removed staff/user ID " + userId, "admin");
         return ResponseEntity.ok(response);
     }
 }

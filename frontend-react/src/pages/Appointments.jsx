@@ -16,6 +16,7 @@ function Appointments() {
     const [availableSlots, setAvailableSlots] = useState([]);
     const [loading, setLoading] = useState(false);
     const [fetchingSlots, setFetchingSlots] = useState(false);
+    const [queueBlocked, setQueueBlocked] = useState(false);
 
     useEffect(() => {
         const tomorrow = new Date();
@@ -28,11 +29,17 @@ function Appointments() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [appointmentsRes, officesRes] = await Promise.all([
+            const [appointmentsRes, officesRes, queuesRes] = await Promise.all([
                 api.get('/appointments/my-appointments'),
-                api.get('/offices/active')
+                api.get('/offices/active'),
+                api.get('/queues/my-tickets')
             ]);
-            setAppointments(appointmentsRes.data);
+            setAppointments((appointmentsRes.data || []).filter(appointment =>
+                !['COMPLETED', 'CANCELLED'].includes(appointment.status)
+            ));
+            setQueueBlocked((queuesRes.data || []).some(ticket =>
+                ticket.status === 'CALLED' || (ticket.status === 'WAITING' && ticket.position <= 2)
+            ));
 
             const uniqueOffices = Array.from(
                 new Map(officesRes.data.map(office => [office.id, office])).values()
@@ -105,6 +112,23 @@ function Appointments() {
 
         if (!selectedOffice || !selectedService || !selectedTime) {
             toast.error('Please fill all fields');
+            return;
+        }
+
+        if (queueBlocked) {
+            toast.error('Your queue turn is near. Please complete it before booking an appointment.');
+            return;
+        }
+
+        const selectedOfficeName = offices.find(office => String(office.id) === selectedOffice)?.name;
+        const selectedServiceName = services.find(service => String(service.id) === selectedService)?.name;
+        const hasActiveAppointment = appointments.some(appointment =>
+            appointment.officeName === selectedOfficeName
+            && appointment.serviceName === selectedServiceName
+            && !['COMPLETED', 'CANCELLED'].includes(appointment.status)
+        );
+        if (hasActiveAppointment) {
+            toast.error('You already have an active appointment for this office and service.');
             return;
         }
 
@@ -253,15 +277,18 @@ function Appointments() {
                         </div>
                         <button
                             type="submit"
+                            disabled={queueBlocked || !selectedOffice || !selectedService || !selectedTime}
                             className="btn-primary w-full disabled:opacity-50"
-                            disabled={!selectedOffice || !selectedService || !selectedTime}
                         >
-                            Book Appointment
+                            {queueBlocked ? 'Queue turn is near' : 'Book Appointment'}
                         </button>
                     </form>
+                        {queueBlocked && (
+                            <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                                Complete your current queue turn before booking another request.
+                            </p>
+                        )}
                 </div>
-
-                {/* My Appointments */}
                 <div className="user-card lg:col-span-2">
                     <h2 className="user-card-title">My Appointments</h2>
                     {appointments.length === 0 ? (
@@ -270,7 +297,7 @@ function Appointments() {
                         <div className="space-y-3">
                             {appointments.map((appointment) => (
                                 <div key={appointment.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                    <div className="flex justify-between items-start">
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
                                             <p className="font-semibold text-gray-900 dark:text-white">{appointment.officeName}</p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">{appointment.serviceName}</p>
@@ -279,14 +306,14 @@ function Appointments() {
                                             </p>
                                             <p className="text-sm text-gray-600 dark:text-gray-400">Reference: {appointment.referenceNumber}</p>
                                         </div>
-                                        <div className="text-right">
-                      <span className={`px-3 py-1 rounded-full text-sm ${getStatusBadge(appointment.status)}`}>
-                        {appointment.status}
-                      </span>
-                                            {appointment.status !== 'CANCELLED' && appointment.status !== 'COMPLETED' && (
+                                        <div className="flex shrink-0 flex-row items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-start sm:gap-2">
+                                            <span className={`inline-flex min-h-7 items-center justify-center rounded-full px-3 py-1 text-center text-xs font-semibold tracking-wide ${getStatusBadge(appointment.status)}`}>
+                                                {appointment.status.replaceAll('_', ' ')}
+                                            </span>
+                                            {appointment.status === 'PENDING' && (
                                                 <button
                                                     onClick={() => handleCancelAppointment(appointment.id)}
-                                                    className="block mt-2 text-sm text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                                                    className="min-h-7 rounded-md px-2 text-sm font-medium text-red-600 transition hover:bg-red-50 hover:text-red-800 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
                                                 >
                                                     Cancel
                                                 </button>

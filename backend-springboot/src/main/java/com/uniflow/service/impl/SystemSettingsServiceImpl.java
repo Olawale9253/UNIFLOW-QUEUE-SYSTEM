@@ -33,10 +33,6 @@ public class SystemSettingsServiceImpl implements SystemSettingsService {
             SystemSettings defaults = new SystemSettings();
             return settingsRepository.save(defaults);
         });
-        if ("UniFlow".equals(settings.getSiteName())) {
-            settings.setSiteName("LAGOS STATE UNIVERSITY, LAGOS");
-            settings = settingsRepository.save(settings);
-        }
         return settings;
     }
 

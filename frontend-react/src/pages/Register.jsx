@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import PasswordStrength from '../components/common/PasswordStrength';
 import toast from 'react-hot-toast';
 import { useBranding } from '../context/BrandingContext';
+import SchoolLogoPlaceholder from '../components/common/SchoolLogoPlaceholder';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -12,7 +13,8 @@ function Register() {
     password: '',
     confirmPassword: '',
     fullName: '',
-    phone: ''
+    phone: '',
+    role: 'STUDENT'
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -94,7 +96,7 @@ function Register() {
     setLoading(true);
     try {
       await register(formData);
-      toast.success('Registration successful! Please login.');
+      toast.success('Registration submitted. An administrator must approve your account before you can log in.');
       navigate('/login');
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
@@ -118,7 +120,7 @@ function Register() {
         <div className="card w-full max-w-md p-6 sm:p-8">
           <div className="text-center mb-8">
             <Link to="/">
-              <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" />
+              {branding.logo ? <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" /> : <SchoolLogoPlaceholder className="mx-auto h-12 w-12" />}
               <h1 className="gradient-text text-3xl font-black">{branding.schoolName}</h1>
             </Link>
             <p className="mt-2 text-slate-600 dark:text-slate-400">Create your account</p>
@@ -146,6 +148,19 @@ function Register() {
               {errors.fullName && (
                   <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>
               )}
+            </div>
+
+            <div className="mb-4">
+              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Account Type *</label>
+              <select
+                  name="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                  className="input py-3"
+              >
+                <option value="STUDENT">Student</option>
+                <option value="STAFF">Staff</option>
+              </select>
             </div>
 
             <div className="mb-4">

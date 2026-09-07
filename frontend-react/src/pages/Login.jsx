@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBranding } from '../context/BrandingContext';
+import SchoolLogoPlaceholder from '../components/common/SchoolLogoPlaceholder';
 
 function Login() {
   const [email, setEmail] = useState('');
@@ -78,7 +79,7 @@ function Login() {
         <div className="card w-full max-w-md p-6 sm:p-8">
           <div className="text-center mb-8">
             <Link to="/">
-              <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" />
+              {branding.logo ? <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" /> : <SchoolLogoPlaceholder className="mx-auto h-12 w-12" />}
               <h1 className="gradient-text text-3xl font-black">{branding.schoolName}</h1>
             </Link>
             <p className="mt-2 text-slate-600 dark:text-slate-400">Sign in to your account</p>

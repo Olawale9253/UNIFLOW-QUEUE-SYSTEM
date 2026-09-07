@@ -82,13 +82,14 @@ public class DocumentController {
     public ResponseEntity<DocumentResponse> updateDocumentStatus(
             @PathVariable Long requestId,
             @RequestParam String status,
-            @RequestParam(required = false) String comments) {
+            @RequestParam(required = false) String comments,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         DocumentResponse response = documentService.updateDocumentStatus(requestId, status, comments);
 
         // Log activity
         try {
             activityLogService.logActivity(
-                    "Admin/Staff",
+                    userDetails.getFullName(),
                     "Updated document status to " + status + " for " + response.getTrackingNumber(),
                     "document"
             );

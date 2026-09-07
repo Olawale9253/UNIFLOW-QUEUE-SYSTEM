@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 import UserAvatar from '../components/common/UserAvatar';
+import ProfileImagePicker from '../components/common/ProfileImagePicker';
 
 function Profile() {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
     const [loading, setLoading] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [stats, setStats] = useState({
@@ -79,19 +80,15 @@ function Profile() {
         e.preventDefault();
         setUpdating(true);
         try {
-            const response = await api.put('/users/profile', null, {
-                params: {
-                    fullName: profile.fullName,
-                    phone: profile.phone,
-                    matriculationNumber: profile.matriculationNumber,
-                    profileImageUrl: profile.profileImageUrl
-                }
+            const response = await api.put('/users/profile', {
+                fullName: profile.fullName,
+                phone: profile.phone,
+                profileImageUrl: profile.profileImageUrl
             });
             toast.success('Profile updated successfully');
             setEditMode(false);
 
-            const updatedUser = { ...user, ...profile };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
+            updateUser(response.data);
 
             await fetchProfile();
         } catch (error) {
@@ -215,22 +212,16 @@ function Profile() {
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Matriculation Number</label>
                                     <input
                                         type="text"
-                                        name="matriculationNumber"
                                         value={profile.matriculationNumber}
-                                        onChange={handleChange}
-                                        className="input"
-                                        placeholder="Enter matriculation number"
+                                        className="input cursor-not-allowed bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                        disabled
                                     />
+                                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Matriculation number cannot be changed</p>
                                 </div>
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image URL</label>
-                                    <input
-                                        type="url"
-                                        name="profileImageUrl"
+                                    <ProfileImagePicker
                                         value={profile.profileImageUrl}
-                                        onChange={handleChange}
-                                        className="input"
-                                        placeholder="https://example.com/profile-image.jpg"
+                                        onChange={(profileImageUrl) => setProfile(prev => ({ ...prev, profileImageUrl }))}
                                     />
                                 </div>
                             </div>

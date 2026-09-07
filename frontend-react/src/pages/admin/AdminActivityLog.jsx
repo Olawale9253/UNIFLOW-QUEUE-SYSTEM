@@ -86,8 +86,8 @@ function AdminActivityLog() {
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View all student and staff activities across the system.</p>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-6">
+            <div className="sticky top-[104px] z-10 -mx-4 bg-gradient-primary px-4 pb-6 sm:-mx-6 sm:px-6">
+                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <input
                         type="text"
@@ -115,13 +115,14 @@ function AdminActivityLog() {
                         Refresh
                     </button>
                 </div>
+                </div>
             </div>
 
             {/* Activities Table */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="max-h-[calc(100vh-290px)] overflow-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                        <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">User</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Action</th>

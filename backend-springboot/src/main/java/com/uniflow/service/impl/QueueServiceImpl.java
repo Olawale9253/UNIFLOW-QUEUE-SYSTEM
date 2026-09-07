@@ -58,6 +58,10 @@ public class QueueServiceImpl implements QueueService {
         OfficeService service = serviceRepository.findById(request.getServiceId())
                 .orElseThrow(() -> new ResourceNotFoundException("Service not found"));
 
+        if (hasQueueNearTurn(userId)) {
+            throw new BadRequestException("Your queue turn is near. Please complete it before joining another queue.");
+        }
+
         // Check if user already has an active ticket for THIS SAME office AND service
         List<QueueTicket> activeTickets = queueTicketRepository.findByStudentId(userId)
                 .stream()
@@ -186,6 +190,9 @@ public class QueueServiceImpl implements QueueService {
             "Your ticket " + ticket.getTicketNumber() + " is now being served at " + ticket.getOffice().getName() + ".",
             "queue"
         );
+        notificationService.createNotificationForOfficeStaff(
+            ticket.getOffice().getId(), "Queue ticket called",
+            "Ticket " + ticket.getTicketNumber() + " is now being served.", "queue");
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -211,6 +218,9 @@ public class QueueServiceImpl implements QueueService {
             "Your ticket " + ticket.getTicketNumber() + " at " + ticket.getOffice().getName() + " has been completed.",
             "queue"
         );
+        notificationService.createNotificationForOfficeStaff(
+            ticket.getOffice().getId(), "Queue ticket completed",
+            "Ticket " + ticket.getTicketNumber() + " has been completed.", "queue");
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -235,6 +245,9 @@ public class QueueServiceImpl implements QueueService {
             "Your ticket " + ticket.getTicketNumber() + " at " + ticket.getOffice().getName() + " was skipped.",
             "queue"
         );
+        notificationService.createNotificationForOfficeStaff(
+            ticket.getOffice().getId(), "Queue ticket skipped",
+            "Ticket " + ticket.getTicketNumber() + " was skipped.", "queue");
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -282,6 +295,14 @@ public class QueueServiceImpl implements QueueService {
 
     private List<QueueTicket> getWaitingTickets(Long officeId) {
         return queueTicketRepository.findByOfficeIdAndStatusOrderByPositionAsc(officeId, "WAITING");
+    }
+
+    private boolean hasQueueNearTurn(Long userId) {
+        return queueTicketRepository.findByStudentId(userId).stream()
+                .anyMatch(ticket -> ticket.getStatus().equals("CALLED")
+                        || (ticket.getStatus().equals("WAITING")
+                        && ticket.getPosition() != null
+                        && ticket.getPosition() <= 2));
     }
 
     private void reindexQueue(Long officeId) {

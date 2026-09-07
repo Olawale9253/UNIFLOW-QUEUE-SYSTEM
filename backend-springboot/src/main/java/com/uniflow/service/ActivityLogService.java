@@ -33,10 +33,14 @@ public class ActivityLogService {
 
     public List<ActivityLog> getRecentActivities(int limit) {
         try {
-            return activityLogRepository.findTop10ByOrderByTimestampDesc();
+            return activityLogRepository.findAllByOrderByTimestampDesc();
         } catch (Exception e) {
             System.err.println("❌ Error fetching activities: " + e.getMessage());
             return List.of();
         }
+    }
+
+    public List<ActivityLog> getActivitiesForUser(String username) {
+        return activityLogRepository.findByUsernameOrderByTimestampDesc(username);
     }
 }

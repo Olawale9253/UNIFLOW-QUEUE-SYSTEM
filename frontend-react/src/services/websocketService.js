@@ -13,7 +13,7 @@ class WebSocketService {
             return;
         }
 
-        const wsUrl = 'http://localhost:8081/ws';
+        const wsUrl = process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:8081/api/ws';
         console.log('Connecting to WebSocket at:', wsUrl);
 
         // Use SockJS for better compatibility
@@ -41,15 +41,7 @@ class WebSocketService {
                 const data = JSON.parse(event.data);
                 console.log('Message received:', data);
 
-                if (data.event === 'queue-update') {
-                    this.notifyListeners('queue-update', data);
-                } else if (data.event === 'notification') {
-                    this.notifyListeners('notification', data);
-                } else if (data.event === 'queue-position') {
-                    this.notifyListeners('queue-position', data);
-                } else if (data.event === 'connect') {
-                    this.notifyListeners('connect', data);
-                }
+                this.notifyListeners(data.event, data);
             } catch (e) {
                 console.error('Error parsing message:', e);
             }

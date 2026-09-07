@@ -46,6 +46,7 @@ public class AdminServiceImpl implements AdminService {
         long pendingAppointments = appointmentRepository.countByStatus("PENDING");
         long completedAppointments = appointmentRepository.countByStatus("COMPLETED");
         long totalOffices = officeRepository.count();
+        long totalStaff = userRepository.countByRole("STAFF");
 
         DashboardStatsResponse response = new DashboardStatsResponse();
         response.setTotalStudents(totalStudents);
@@ -57,6 +58,7 @@ public class AdminServiceImpl implements AdminService {
         response.setCompletedAppointments(completedAppointments);
         response.setTotalOffices(totalOffices);
         response.setTotalServices(0L);
+        response.setTotalStaff(totalStaff);
 
         return response;
     }

@@ -19,13 +19,13 @@ function NotificationBell() {
 
     const getNotificationIcon = (type) => {
         switch(type) {
-            case 'appointment': return '📅';
-            case 'queue': return '🎫';
-            case 'document': return '📄';
-            case 'system': return '⚙️';
-            case 'success': return '✅';
-            case 'error': return '❌';
-            default: return '📨';
+            case 'appointment': return 'A';
+            case 'queue': return 'Q';
+            case 'document': return 'D';
+            case 'system': return 'S';
+            case 'success': return 'OK';
+            case 'error': return '!';
+            default: return 'N';
         }
     };
 
@@ -95,6 +95,14 @@ function NotificationBell() {
                                     Clear all
                                 </button>
                             )}
+                            <button
+                                onClick={() => setIsOpen(false)}
+                                className="rounded-md px-2 text-lg leading-none text-gray-500 hover:bg-gray-200 hover:text-gray-700 dark:hover:bg-gray-600 dark:hover:text-gray-200"
+                                aria-label="Close notifications"
+                                title="Close notifications"
+                            >
+                                ×
+                            </button>
                         </div>
                     </div>
 
@@ -102,7 +110,7 @@ function NotificationBell() {
                     <div className="overflow-y-auto max-h-80">
                         {notifications.length === 0 ? (
                             <div className="text-center py-8">
-                                <span className="text-4xl block mb-2">🔔</span>
+                                <span className="mb-2 block text-2xl font-semibold text-slate-300">N</span>
                                 <p className="text-gray-500 dark:text-gray-400">No notifications</p>
                                 <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">You're all caught up!</p>
                             </div>
@@ -138,12 +146,7 @@ function NotificationBell() {
                     {/* Footer */}
                     {notifications.length > 0 && (
                         <div className="p-2 border-t border-gray-200 dark:border-gray-700 text-center">
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-                            >
-                                Close
-                            </button>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">Select a notification to mark it as read</span>
                         </div>
                     )}
                 </div>

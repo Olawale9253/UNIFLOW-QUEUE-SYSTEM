@@ -18,12 +18,14 @@ function AdminAppointments() {
 
     useEffect(() => {
         fetchData();
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     const fetchData = async () => {
         try {
             const [appointmentsRes, officesRes] = await Promise.all([
-                api.get('/appointments/my-appointments'),
+                api.get('/appointments/all'),
                 api.get('/offices')
             ]);
             setAppointments(appointmentsRes.data);
@@ -71,7 +73,10 @@ function AdminAppointments() {
             app.officeName?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesOffice = !filters.officeId || app.officeId === parseInt(filters.officeId);
         const matchesStatus = !filters.status || app.status === filters.status;
-        return matchesSearch && matchesOffice && matchesStatus;
+        const appointmentDate = app.appointmentTime ? new Date(app.appointmentTime) : null;
+        const matchesDateFrom = !filters.dateFrom || (appointmentDate && appointmentDate >= new Date(`${filters.dateFrom}T00:00:00`));
+        const matchesDateTo = !filters.dateTo || (appointmentDate && appointmentDate <= new Date(`${filters.dateTo}T23:59:59`));
+        return matchesSearch && matchesOffice && matchesStatus && matchesDateFrom && matchesDateTo;
     });
 
     const getStatusBadge = (status) => {
@@ -135,10 +140,7 @@ function AdminAppointments() {
             <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Appointment</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage all appointments in the system.</p>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-6">
+                <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <input
                         type="text"
@@ -197,13 +199,14 @@ function AdminAppointments() {
                         📊 Export CSV
                     </button>
                 </div>
+                </div>
             </div>
 
             {/* Appointments Table */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="max-h-[calc(100vh-330px)] overflow-auto">
                     <table className="w-full">
-                        <thead className="bg-gray-50 dark:bg-gray-700">
+                        <thead className="sticky top-0 z-10 bg-gray-50 dark:bg-gray-700">
                         <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Reference</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Student</th>

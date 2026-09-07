@@ -47,6 +47,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional
+    public void createNotificationForOfficeStaff(Long officeId, String title, String message, String type) {
+        userRepository.findByRoleAndOfficeId("STAFF", officeId)
+                .forEach(staff -> createNotification(staff.getId(), title, message, type));
+    }
+
+    @Override
+    @Transactional
     public void markAsRead(Long notificationId, Long userId) {
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));

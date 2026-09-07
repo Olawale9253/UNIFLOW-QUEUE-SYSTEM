@@ -26,13 +26,21 @@ export function AuthProvider({ children }) {
         setUser(null);
     };
 
+    const updateUser = (updates) => {
+        setUser(previous => {
+            const nextUser = { ...previous, ...updates };
+            localStorage.setItem('user', JSON.stringify(nextUser));
+            return nextUser;
+        });
+    };
+
     const register = async (userData) => {
         const response = await authService.register(userData);
         return response;
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, register }}>
+            <AuthContext.Provider value={{ user, loading, login, logout, register, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

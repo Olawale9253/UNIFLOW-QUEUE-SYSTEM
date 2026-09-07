@@ -12,6 +12,8 @@ function AdminUsers() {
 
     useEffect(() => {
         fetchUsers();
+        const interval = setInterval(fetchUsers, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     const fetchUsers = async () => {
@@ -28,8 +30,7 @@ function AdminUsers() {
 
     const handleRoleChange = async (userId, newRole) => {
         try {
-            // You'll need to add this endpoint in the backend
-            // await api.put(`/users/${userId}/role`, { role: newRole });
+            await api.put(`/users/${userId}/role`, { role: newRole });
             toast.success(`User role updated to ${newRole}`);
             fetchUsers();
         } catch (error) {
@@ -49,6 +50,16 @@ function AdminUsers() {
             fetchUsers();
         } catch (error) {
             toast.error('Failed to update user status');
+        }
+    };
+
+    const handleApproval = async (userId, approve) => {
+        try {
+            await api.put(`/users/${userId}/${approve ? 'approve' : 'reject'}`);
+            toast.success(approve ? 'Account approved' : 'Account rejected');
+            fetchUsers();
+        } catch (error) {
+            toast.error('Failed to update account approval');
         }
     };
 
@@ -85,16 +96,13 @@ function AdminUsers() {
     return (
         <AdminLayout>
             <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Management</h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all students in the system.</p>
-            </div>
-
-            {/* Filters */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
+                <p className="text-gray-600 dark:text-gray-400 mt-1">Manage students, staff, and administrators in the system.</p>
+                <div className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <input
                         type="text"
-                        placeholder="Search students..."
+                        placeholder="Search by name, email, or matric number..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
@@ -110,11 +118,12 @@ function AdminUsers() {
                         <option value="STUDENT">Student</option>
                     </select>
                 </div>
+                </div>
             </div>
 
             {/* Users Table */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="max-h-[calc(100vh-300px)] overflow-auto">
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-gray-700">
                         <tr>
@@ -148,19 +157,20 @@ function AdminUsers() {
                         user.active ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                             'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
                     }`}>
-                      {user.active ? 'Active' : 'Inactive'}
+                      {!user.approved ? 'Pending approval' : user.active ? 'Active' : 'Inactive'}
                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <button
-                                        onClick={() => handleToggleActive(user.id, user.active)}
+                                        onClick={() => !user.approved ? handleApproval(user.id, true) : handleToggleActive(user.id, user.active)}
                                         className={`px-3 py-1 rounded text-xs transition ${
-                                            user.active ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200' :
+                                            !user.approved ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 hover:bg-green-200' : user.active ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200' :
                                                 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 hover:bg-green-200'
                                         }`}
                                     >
-                                        {user.active ? 'Deactivate' : 'Activate'}
+                                        {!user.approved ? 'Approve' : user.active ? 'Deactivate' : 'Activate'}
                                     </button>
+                                    {!user.approved && <button onClick={() => handleApproval(user.id, false)} className="ml-2 rounded bg-red-100 px-3 py-1 text-xs text-red-600 hover:bg-red-200">Reject</button>}
                                     <select
                                         value={user.role}
                                         onChange={(e) => handleRoleChange(user.id, e.target.value)}

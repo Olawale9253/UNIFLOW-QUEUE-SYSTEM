@@ -55,24 +55,28 @@ function AdminReports() {
         const startDate = new Date();
         startDate.setDate(startDate.getDate() - 30);
 
-        setDateRange({
+        const initialRange = {
             startDate: startDate.toISOString().split('T')[0],
             endDate: endDate.toISOString().split('T')[0]
-        });
+        };
+        setDateRange(initialRange);
 
-        fetchReportData();
+        fetchReportData(initialRange);
+        const interval = setInterval(() => fetchReportData(initialRange), 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    const fetchReportData = async () => {
+    const fetchReportData = async (range = dateRange) => {
         setLoading(true);
         try {
             // Fetch all data
-            const [appointmentsRes, usersRes, ticketsRes, documentsRes, officesRes] = await Promise.all([
-                api.get('/appointments/my-appointments'),
+            const [appointmentsRes, usersRes, ticketsRes, documentsRes, officesRes, dashboardRes] = await Promise.all([
+                api.get('/appointments/all'),
                 api.get('/users'),
                 api.get('/queues/my-tickets'),
                 api.get('/documents/my-requests'),
-                api.get('/offices')
+                api.get('/offices'),
+                api.get('/admin/dashboard/stats')
             ]);
 
             const appointments = appointmentsRes.data || [];
@@ -81,16 +85,24 @@ function AdminReports() {
             const documents = documentsRes.data || [];
             const offices = officesRes.data || [];
 
+            const filteredAppointments = appointments.filter(appointment => {
+                const appointmentDate = appointment.appointmentTime ? new Date(appointment.appointmentTime) : null;
+                if (!appointmentDate) return false;
+                const afterStart = !range.startDate || appointmentDate >= new Date(`${range.startDate}T00:00:00`);
+                const beforeEnd = !range.endDate || appointmentDate <= new Date(`${range.endDate}T23:59:59`);
+                return afterStart && beforeEnd;
+            });
+
             // Calculate stats
-            const pending = appointments.filter(a => a.status === 'PENDING').length;
-            const completed = appointments.filter(a => a.status === 'COMPLETED').length;
-            const cancelled = appointments.filter(a => a.status === 'CANCELLED').length;
+            const pending = filteredAppointments.filter(a => a.status === 'PENDING').length;
+            const completed = filteredAppointments.filter(a => a.status === 'COMPLETED').length;
+            const cancelled = filteredAppointments.filter(a => a.status === 'CANCELLED').length;
 
             setStats({
-                totalAppointments: appointments.length,
+                totalAppointments: filteredAppointments.length,
                 totalStudents: users.filter(u => u.role === 'STUDENT').length,
-                totalQueues: tickets.length,
-                totalDocuments: documents.length,
+                totalQueues: dashboardRes.data.totalQueueTickets || 0,
+                totalDocuments: dashboardRes.data.totalDocumentRequests || 0,
                 pendingAppointments: pending,
                 completedAppointments: completed,
                 cancelledAppointments: cancelled
@@ -98,7 +110,7 @@ function AdminReports() {
 
             // Prepare appointment data by date
             const dateMap = new Map();
-            appointments.forEach(app => {
+            filteredAppointments.forEach(app => {
                 const date = new Date(app.appointmentTime).toLocaleDateString();
                 dateMap.set(date, (dateMap.get(date) || 0) + 1);
             });
@@ -109,7 +121,7 @@ function AdminReports() {
 
             // Prepare office data
             const officeMap = new Map();
-            appointments.forEach(app => {
+            filteredAppointments.forEach(app => {
                 const officeName = app.officeName || 'Unknown';
                 officeMap.set(officeName, (officeMap.get(officeName) || 0) + 1);
             });
@@ -117,7 +129,7 @@ function AdminReports() {
 
             // Prepare status data
             const statusMap = new Map();
-            appointments.forEach(app => {
+            filteredAppointments.forEach(app => {
                 const status = app.status || 'Unknown';
                 statusMap.set(status, (statusMap.get(status) || 0) + 1);
             });
@@ -158,6 +170,7 @@ function AdminReports() {
 
     const barChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
@@ -213,6 +226,7 @@ function AdminReports() {
 
     const pieChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
@@ -243,6 +257,7 @@ function AdminReports() {
 
     const officeChartOptions = {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'top',
@@ -367,7 +382,9 @@ function AdminReports() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appointments Trend</h3>
                     {appointmentData.length > 0 ? (
-                        <Bar data={barChartData} options={barChartOptions} />
+                        <div className="h-[280px]">
+                            <Bar data={barChartData} options={barChartOptions} />
+                        </div>
                     ) : (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No appointment data available</p>
                     )}
@@ -376,7 +393,9 @@ function AdminReports() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Status Distribution</h3>
                     {statusData.length > 0 ? (
-                        <Pie data={pieChartData} options={pieChartOptions} />
+                        <div className="h-[260px]">
+                            <Pie data={pieChartData} options={pieChartOptions} />
+                        </div>
                     ) : (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No status data available</p>
                     )}
@@ -385,7 +404,9 @@ function AdminReports() {
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appointments by Office</h3>
                     {officeData.length > 0 ? (
-                        <Bar data={officeChartData} options={officeChartOptions} />
+                        <div className="h-[300px]">
+                            <Bar data={officeChartData} options={officeChartOptions} />
+                        </div>
                     ) : (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No office data available</p>
                     )}

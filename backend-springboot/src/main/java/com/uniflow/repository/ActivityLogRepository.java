@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
     List<ActivityLog> findTop10ByOrderByTimestampDesc();
+    List<ActivityLog> findAllByOrderByTimestampDesc();
+    List<ActivityLog> findByUsernameOrderByTimestampDesc(String username);
 }

@@ -6,6 +6,7 @@ import { confirmAction } from '../../utils/notifications';
 
 function AdminOffices() {
     const [offices, setOffices] = useState([]);
+    const [assignedStaff, setAssignedStaff] = useState({});
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingOffice, setEditingOffice] = useState(null);
@@ -24,7 +25,13 @@ function AdminOffices() {
     const fetchOffices = async () => {
         try {
             const response = await api.get('/offices');
-            setOffices(response.data);
+            const activeOffices = response.data.filter(office => office.active !== false);
+            setOffices(activeOffices);
+            const staffByOffice = await Promise.all(activeOffices.map(async (office) => {
+                const staffResponse = await api.get(`/users/office/${office.id}/staff`);
+                return [office.id, staffResponse.data || []];
+            }));
+            setAssignedStaff(Object.fromEntries(staffByOffice));
         } catch (error) {
             console.error('Error fetching offices:', error);
             toast.error('Failed to load offices');
@@ -119,20 +126,30 @@ function AdminOffices() {
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Hours: {office.workingHoursStart} - {office.workingHoursEnd}</p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Slot: {office.slotDurationMinutes} min</p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">Services: {office.services?.length || 0}</p>
+                                    <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 dark:border-blue-900/50 dark:bg-blue-900/20">
+                                        <p className="text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">Assigned officer</p>
+                                        {(assignedStaff[office.id] || []).length > 0 ? (
+                                            assignedStaff[office.id].map(member => <p key={member.id} className="mt-1 text-sm font-medium text-gray-900 dark:text-white">{member.fullName}</p>)
+                                        ) : <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Not assigned</p>}
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex space-x-2">
                                 <button
                                     onClick={() => handleEdit(office)}
                                     className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                                    aria-label={`Edit ${office.name}`}
+                                    title="Edit office"
                                 >
-                                    ✏️
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="m4 16 9.5-9.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /><path strokeLinecap="round" d="m14 6 4 4" /></svg>
                                 </button>
                                 <button
                                     onClick={() => handleDelete(office.id)}
                                     className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                                    aria-label={`Delete ${office.name}`}
+                                    title="Delete office"
                                 >
-                                    🗑️
+                                    <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                                 </button>
                             </div>
                         </div>

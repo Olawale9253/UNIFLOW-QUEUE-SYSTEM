@@ -36,14 +36,21 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "profile_image_url", length = 500)
+    @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
 
     @Column(nullable = false)
     private String role = "STUDENT";
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "office_id")
+    private Office office;
+
     @Column(name = "is_active")
     private boolean active = true;
+
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean approved = true;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -108,8 +115,14 @@ public class User {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
+    public Office getOffice() { return office; }
+    public void setOffice(Office office) { this.office = office; }
+
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }
+
+    public boolean isApproved() { return approved; }
+    public void setApproved(boolean approved) { this.approved = approved; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -10,7 +10,10 @@ public class UserResponse {
     private String phone;
     private String profileImageUrl;
     private String role;
+    private Long officeId;
+    private String officeName;
     private Boolean active;
+    private Boolean approved;
     private LocalDateTime createdAt;
 
     // Default constructor
@@ -18,7 +21,8 @@ public class UserResponse {
 
     // Parameterized constructor
     public UserResponse(Long id, String matriculationNumber, String email, String fullName,
-                        String phone, String profileImageUrl, String role, Boolean active, LocalDateTime createdAt) {
+                        String phone, String profileImageUrl, String role, Long officeId, String officeName,
+                        Boolean active, Boolean approved, LocalDateTime createdAt) {
         this.id = id;
         this.matriculationNumber = matriculationNumber;
         this.email = email;
@@ -26,7 +30,10 @@ public class UserResponse {
         this.phone = phone;
         this.profileImageUrl = profileImageUrl;
         this.role = role;
+        this.officeId = officeId;
+        this.officeName = officeName;
         this.active = active;
+        this.approved = approved;
         this.createdAt = createdAt;
     }
 
@@ -52,8 +59,17 @@ public class UserResponse {
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
 
+    public Long getOfficeId() { return officeId; }
+    public void setOfficeId(Long officeId) { this.officeId = officeId; }
+
+    public String getOfficeName() { return officeName; }
+    public void setOfficeName(String officeName) { this.officeName = officeName; }
+
     public Boolean getActive() { return active; }
     public void setActive(Boolean active) { this.active = active; }
+
+    public Boolean getApproved() { return approved; }
+    public void setApproved(Boolean approved) { this.approved = approved; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

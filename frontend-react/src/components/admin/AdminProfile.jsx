@@ -43,11 +43,9 @@ function AdminProfile() {
         e.preventDefault();
         setUpdating(true);
         try {
-            await api.put('/users/profile', null, {
-                params: {
-                    fullName: profile.fullName,
-                    phone: profile.phone
-                }
+            await api.put('/users/profile', {
+                fullName: profile.fullName,
+                phone: profile.phone
             });
             toast.success('Profile updated successfully');
             setEditMode(false);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useBranding } from '../../context/BrandingContext';
-import defaultLogo from '../../assets/images/school-logo.png';
+import SchoolLogoPlaceholder from './SchoolLogoPlaceholder';
 
 function SchoolBranding({ className = '', showLogo = true, showName = true, layout = 'row' }) {
   const { branding } = useBranding();
@@ -10,17 +10,21 @@ function SchoolBranding({ className = '', showLogo = true, showName = true, layo
     <div className={`${isStacked ? 'flex flex-col items-center gap-4 text-center' : 'flex items-center space-x-3'} ${className}`}>
       {showLogo && (
         <div className="flex-shrink-0">
-          <img
-            src={branding.logo || defaultLogo}
-            alt={branding.schoolName || 'School logo'}
-            className={`${isStacked ? 'h-28 w-28' : 'h-10 w-10'} object-contain rounded-lg`}
-          />
+          {branding.logo ? (
+            <img
+              src={branding.logo}
+              alt={branding.schoolName || 'School logo'}
+              className={`${isStacked ? 'h-28 w-28' : 'h-10 w-10'} object-contain rounded-lg`}
+            />
+          ) : (
+            <SchoolLogoPlaceholder className={isStacked ? 'h-28 w-28' : 'h-10 w-10'} />
+          )}
         </div>
       )}
       {showName && (
         <div className={`flex flex-col ${isStacked ? 'items-center' : ''}`}>
           <span className={`${isStacked ? 'text-base' : 'text-sm'} font-bold leading-tight text-gray-900 dark:text-white`}>
-            {branding.schoolName || 'LADOKE AKINTOLA UNIVERSITY OF TECHNOLOGY, OGBOMOSO'}
+            {branding.schoolName || 'School name not configured'}
           </span>
           {branding.schoolName && (
             <span className="text-[10px] leading-tight text-gray-500 dark:text-gray-400">

@@ -5,9 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
+    List<User> findByRoleAndOfficeId(String role, Long officeId);
+    boolean existsByRoleAndOfficeIdAndActiveTrueAndIdNot(String role, Long officeId, Long id);
     long countByRole(String role);
     Optional<User> findByEmail(String email);
     Optional<User> findByMatriculationNumber(String matriculationNumber);

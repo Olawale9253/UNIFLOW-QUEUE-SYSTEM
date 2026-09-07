@@ -42,7 +42,7 @@ function AdminBranding() {
   const handleReset = () => {
     if (!window.confirm('Are you sure you want to reset all branding to default?')) return;
     resetBranding();
-    setSchoolName('LADOKE AKINTOLA UNIVERSITY OF TECHNOLOGY, OGBOMOSO');
+    setSchoolName('');
     setIsEditing(false);
   };
 

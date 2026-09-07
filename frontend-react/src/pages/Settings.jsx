@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../utils/notifications';
 
 function Settings() {
     const { user } = useAuth();
-    const { darkMode, toggleDarkMode } = useTheme();
     const [loading, setLoading] = useState(false);
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
@@ -81,36 +79,13 @@ function Settings() {
     };
 
     return (
-        <div className="user-page max-w-4xl pt-20 sm:pt-24">
-            <h1 className="user-page-title sticky top-16 z-20 bg-slate-50/95 py-4 backdrop-blur-sm dark:bg-slate-950/95">Settings</h1>
+        <div className="user-page max-w-4xl">
+            <h1 className="user-page-title mb-6">Settings</h1>
 
             <div className="space-y-6">
-                {/* Appearance Settings */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="sticky top-[8.5rem] z-10 -mx-6 mb-4 bg-white px-6 py-2 text-xl font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">Appearance</h2>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="font-medium text-gray-700 dark:text-gray-300">Dark Mode</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Toggle between light and dark theme</p>
-                        </div>
-                        <button
-                            onClick={toggleDarkMode}
-                            className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none ${
-                                darkMode ? 'bg-blue-600' : 'bg-gray-300 dark:bg-gray-600'
-                            }`}
-                        >
-              <span
-                  className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${
-                      darkMode ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-              />
-                        </button>
-                    </div>
-                </div>
-
                 {/* Change Password */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="sticky top-[8.5rem] z-10 -mx-6 mb-4 bg-white px-6 py-2 text-xl font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">Change Password</h2>
+                    <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Change Password</h2>
                     <form onSubmit={handlePasswordChange}>
                         <div className="space-y-4">
                             <div>
@@ -157,7 +132,7 @@ function Settings() {
 
                 {/* Notification Settings */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="sticky top-[8.5rem] z-10 -mx-6 mb-4 bg-white px-6 py-2 text-xl font-semibold text-gray-900 dark:bg-gray-800 dark:text-white">Notification Preferences</h2>
+                    <h2 className="mb-4 text-xl font-semibold text-gray-900 dark:text-white">Notification Preferences</h2>
                     <div className="space-y-3">
                         {[
                             { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive notifications via email' },
@@ -197,7 +172,7 @@ function Settings() {
 
                 {/* Account Management */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                    <h2 className="sticky top-[8.5rem] z-10 -mx-6 mb-4 bg-white px-6 py-2 text-xl font-semibold text-red-600 dark:bg-gray-800 dark:text-red-400">Account Management</h2>
+                    <h2 className="mb-4 text-xl font-semibold text-red-600 dark:text-red-400">Account Management</h2>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div>

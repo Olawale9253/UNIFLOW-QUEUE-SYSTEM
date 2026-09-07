@@ -23,7 +23,8 @@ import Dashboard from './pages/Dashboard';
 import Queue from './pages/Queue';
 import Appointments from './pages/Appointments';
 import Documents from './pages/Documents';
-import Offices from './pages/Offices';
+import History from './pages/History';
+import Offices from './pages/OfficesPage';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import UserLayout from './components/common/UserLayout';
@@ -31,6 +32,7 @@ import UserLayout from './components/common/UserLayout';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminRegistrationRequests from './pages/admin/AdminRegistrationRequests';
 import AdminOffices from './pages/admin/AdminOffices';
 import AdminStaff from './pages/admin/AdminStaff';
 import AdminAppointments from './pages/admin/AdminAppointments';
@@ -44,6 +46,9 @@ import StaffDashboard from './pages/staff/StaffDashboard';
 import StaffQueue from './pages/staff/StaffQueue';
 import StaffAppointments from './pages/staff/StaffAppointments';
 import StaffDocuments from './pages/staff/StaffDocuments';
+import StaffProfile from './pages/staff/StaffProfile';
+import StaffSettings from './pages/staff/StaffSettings';
+import StaffActivityLog from './pages/staff/StaffActivityLog';
 
 function App() {
     return (
@@ -77,6 +82,11 @@ function App() {
                                         <Route path="/admin/users" element={
                                             <AdminRoute>
                                                 <AdminUsers />
+                                            </AdminRoute>
+                                        } />
+                                        <Route path="/admin/registration-requests" element={
+                                            <AdminRoute>
+                                                <AdminRegistrationRequests />
                                             </AdminRoute>
                                         } />
                                         <Route path="/admin/offices" element={
@@ -136,6 +146,9 @@ function App() {
                                                 <StaffDocuments />
                                             </StaffRoute>
                                         } />
+                                        <Route path="/staff/activity" element={<StaffRoute><StaffActivityLog /></StaffRoute>} />
+                                        <Route path="/staff/profile" element={<StaffRoute><StaffProfile /></StaffRoute>} />
+                                        <Route path="/staff/settings" element={<StaffRoute><StaffSettings /></StaffRoute>} />
 
                                         {/* User Routes */}
                                         <Route path="/dashboard" element={
@@ -156,6 +169,11 @@ function App() {
                                         <Route path="/documents" element={
                                             <ProtectedRoute>
                                                 <UserLayout><Documents /></UserLayout>
+                                            </ProtectedRoute>
+                                        } />
+                                        <Route path="/history" element={
+                                            <ProtectedRoute>
+                                                <UserLayout><History /></UserLayout>
                                             </ProtectedRoute>
                                         } />
                                         <Route path="/offices" element={

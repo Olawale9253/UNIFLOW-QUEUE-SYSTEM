@@ -1,8 +1,12 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import NotificationBell from './NotificationBell';
+import UserAvatar from './UserAvatar';
 
 function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) {
     const { user } = useAuth();
+    const navigate = useNavigate();
 
     const getGreeting = () => {
         const hour = new Date().getHours();
@@ -31,6 +35,18 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
                         <h1 className="greeting-text truncate text-lg font-bold text-black dark:text-white sm:text-xl">{getGreeting()}, {getFirstName()}</h1>
                         <p className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">{subtitle}</p>
                     </div>
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                    <NotificationBell />
+                    <button
+                        type="button"
+                        onClick={() => navigate(user?.role === 'ADMIN' ? '/admin/profile' : user?.role === 'STAFF' ? '/staff/profile' : '/profile')}
+                        className="rounded-full transition hover:ring-2 hover:ring-blue-500/40"
+                        aria-label="Open my profile"
+                        title="My profile"
+                    >
+                        <UserAvatar user={user} size="sm" />
+                    </button>
                 </div>
             </div>
         </header>

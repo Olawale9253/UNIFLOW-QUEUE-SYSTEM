@@ -96,7 +96,7 @@ function AdminDashboard() {
                 pendingAppointments: statsRes.data.pendingAppointments || 0,
                 completedAppointments: statsRes.data.completedAppointments || 0,
                 totalOffices: statsRes.data.totalOffices || 0,
-                totalStaff: 0
+                totalStaff: statsRes.data.totalStaff || 0
             };
 
             // Only update stats if they changed (to prevent re-renders)

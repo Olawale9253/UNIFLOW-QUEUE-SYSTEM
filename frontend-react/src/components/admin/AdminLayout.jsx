@@ -25,8 +25,9 @@ function AdminLayout({ children }) {
     };
 
     const menuItems = [
-        { path: '/admin', label: 'Dashboard', icon: 'dashboard' },
-        { path: '/admin/users', label: 'Students', icon: 'students' },
+        { path: '/admin', label: 'Home', icon: 'dashboard' },
+        { path: '/admin/users', label: 'User Management', icon: 'students' },
+        { path: '/admin/registration-requests', label: 'Registration Requests', icon: 'requests' },
         { path: '/admin/offices', label: 'Offices', icon: 'offices' },
         { path: '/admin/staff', label: 'Staff', icon: 'staff' },
         { path: '/admin/appointments', label: 'Appointments', icon: 'appointments' },
@@ -40,6 +41,7 @@ function AdminLayout({ children }) {
         const icons = {
             dashboard: <><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></>,
             students: <><circle cx="9" cy="8" r="3" /><path d="M3 20a6 6 0 0 1 12 0M16 11a3 3 0 1 0 0-6M16 14a5 5 0 0 1 5 5" /></>,
+            requests: <><path d="M4 5h16v14H4z" /><path d="M8 9h8M8 13h5" /><path d="m17 17 2 2 3-3" /></>,
             offices: <><path d="M3 21h18M5 21V5l7-3 7 3v16M9 8h.01M15 8h.01M9 12h.01M15 12h.01M9 16h6" /></>,
             staff: <><circle cx="12" cy="8" r="3" /><path d="M5 21a7 7 0 0 1 14 0M19 5l1 1 2-2" /></>,
             appointments: <><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></>,
@@ -68,6 +70,7 @@ function AdminLayout({ children }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
             <div className="flex min-h-screen">
+                {isSidebarOpen && <button className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" onClick={() => setIsSidebarOpen(false)} aria-label="Close admin navigation" />}
                 <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-900 lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
                     <div className="flex min-h-0 flex-1 flex-col p-4">
                         <div className="mb-4 flex justify-end lg:hidden">
@@ -78,21 +81,22 @@ function AdminLayout({ children }) {
                         <div className="mb-6 border-b border-gray-200 pb-6 dark:border-slate-800">
                             <SchoolBranding showName={true} showLogo={true} layout="stacked" />
                         </div>
-                        <div className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
-                            {menuItems.map((item) => (
-                                <Link
-                                    key={item.path}
-                                    to={item.path}
-                                    className={`flex items-center gap-3 rounded-lg px-4 py-2.5 transition ${isActive(item.path)}`}
-                                >
-                                    {renderMenuIcon(item.icon)}
-                                    {item.label}
-                                </Link>
-                            ))}
-                        </div>
-
-                        <div className="mt-6 shrink-0 border-t border-gray-200 pt-4 dark:border-gray-700">
-                            <div className="mb-2 rounded-xl bg-gray-50 p-3 dark:bg-gray-700/50">
+                        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/70">
+                            <div className="space-y-1">
+                                {menuItems.map((item) => (
+                                    <Link
+                                        key={item.path}
+                                        to={item.path}
+                                        onClick={() => { if (window.innerWidth < 1024) setIsSidebarOpen(false); }}
+                                        className={`flex items-center gap-3 rounded-lg px-4 py-2.5 transition ${isActive(item.path)}`}
+                                    >
+                                        {renderMenuIcon(item.icon)}
+                                        {item.label}
+                                    </Link>
+                                ))}
+                            </div>
+                            <div className="my-3 border-t border-gray-200 dark:border-gray-700" />
+                            <div>
                                 <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'Admin'}</p>
                                 <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.email || ''}</p>
                             </div>

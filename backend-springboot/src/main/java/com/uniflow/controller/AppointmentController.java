@@ -63,6 +63,12 @@ public class AppointmentController {
         return ResponseEntity.ok(responses);
     }
 
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<AppointmentResponse>> getAllAppointments() {
+        return ResponseEntity.ok(appointmentService.getAllAppointments());
+    }
+
     @GetMapping("/{appointmentId}")
     public ResponseEntity<AppointmentResponse> getAppointment(@PathVariable Long appointmentId) {
         AppointmentResponse response = appointmentService.getAppointment(appointmentId);
@@ -78,21 +84,32 @@ public class AppointmentController {
 
     @PutMapping("/{appointmentId}/confirm")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<AppointmentResponse> confirmAppointment(@PathVariable Long appointmentId) {
+    public ResponseEntity<AppointmentResponse> confirmAppointment(
+            @PathVariable Long appointmentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
         AppointmentResponse response = appointmentService.confirmAppointment(appointmentId);
+        activityLogService.logActivity(userDetails.getFullName(), "Confirmed appointment: " + response.getReferenceNumber(), "appointment");
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{appointmentId}/complete")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<AppointmentResponse> completeAppointment(@PathVariable Long appointmentId) {
-        return ResponseEntity.ok(appointmentService.completeAppointment(appointmentId));
+    public ResponseEntity<AppointmentResponse> completeAppointment(
+            @PathVariable Long appointmentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AppointmentResponse response = appointmentService.completeAppointment(appointmentId);
+        activityLogService.logActivity(userDetails.getFullName(), "Completed appointment: " + response.getReferenceNumber(), "appointment");
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{appointmentId}/staff-cancel")
     @PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
-    public ResponseEntity<AppointmentResponse> cancelAppointmentByStaff(@PathVariable Long appointmentId) {
-        return ResponseEntity.ok(appointmentService.cancelAppointmentByStaff(appointmentId));
+    public ResponseEntity<AppointmentResponse> cancelAppointmentByStaff(
+            @PathVariable Long appointmentId,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        AppointmentResponse response = appointmentService.cancelAppointmentByStaff(appointmentId);
+        activityLogService.logActivity(userDetails.getFullName(), "Cancelled appointment: " + response.getReferenceNumber(), "appointment");
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{appointmentId}/cancel")

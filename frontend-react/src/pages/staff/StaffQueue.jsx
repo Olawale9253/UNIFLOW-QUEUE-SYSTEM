@@ -3,8 +3,10 @@ import api from '../../api/axiosConfig';
 import StaffLayout from '../../components/staff/StaffLayout';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/notifications';
+import { useAuth } from '../../context/AuthContext';
 
 function StaffQueue() {
+    const { user } = useAuth();
     const [offices, setOffices] = useState([]);
     const [selectedOffice, setSelectedOffice] = useState('');
     const [queues, setQueues] = useState([]);
@@ -24,10 +26,10 @@ function StaffQueue() {
 
     const fetchOffices = async () => {
         try {
-            const response = await api.get('/offices/active');
-            setOffices(response.data);
-            if (response.data.length > 0) {
-                setSelectedOffice(response.data[0].id);
+            const response = await api.get('/users/profile');
+            if (response.data.officeId) {
+                setOffices([{ id: response.data.officeId, name: response.data.officeName }]);
+                setSelectedOffice(response.data.officeId);
             }
         } catch (error) {
             toast.error('Failed to load offices');
@@ -98,16 +100,7 @@ function StaffQueue() {
 
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4 border border-gray-100 dark:border-gray-700 mb-6">
                 <div className="flex flex-wrap items-center gap-4">
-                    <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Select Office:</label>
-                    <select
-                        value={selectedOffice}
-                        onChange={(e) => setSelectedOffice(Number(e.target.value))}
-                        className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:border-gray-600 text-gray-900 dark:text-white"
-                    >
-                        {offices.map((office) => (
-                            <option key={office.id} value={office.id}>{office.name}</option>
-                        ))}
-                    </select>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Assigned office: {offices[0]?.name || user?.officeName || 'Not assigned'}</span>
                     <button
                         onClick={handleCallNext}
                         className="bg-green-600 dark:bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-700 dark:hover:bg-green-600 transition"

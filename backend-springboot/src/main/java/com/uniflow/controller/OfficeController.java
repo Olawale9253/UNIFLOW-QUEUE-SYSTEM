@@ -4,6 +4,7 @@ import com.uniflow.dto.request.OfficeRequest;
 import com.uniflow.dto.response.OfficeResponse;
 import com.uniflow.dto.response.ServiceResponse;
 import com.uniflow.service.OfficeManagementService;
+import com.uniflow.service.ActivityLogService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,16 +18,19 @@ import java.util.List;
 public class OfficeController {
 
     private final OfficeManagementService officeService;
+    private final ActivityLogService activityLogService;
 
     // Explicit constructor
-    public OfficeController(OfficeManagementService officeService) {
+    public OfficeController(OfficeManagementService officeService, ActivityLogService activityLogService) {
         this.officeService = officeService;
+        this.activityLogService = activityLogService;
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OfficeResponse> createOffice(@Valid @RequestBody OfficeRequest request) {
         OfficeResponse response = officeService.createOffice(request);
+        activityLogService.logActivity("Admin", "Created office: " + response.getName(), "admin");
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -54,6 +58,7 @@ public class OfficeController {
             @PathVariable Long officeId,
             @Valid @RequestBody OfficeRequest request) {
         OfficeResponse response = officeService.updateOffice(officeId, request);
+        activityLogService.logActivity("Admin", "Updated office: " + response.getName(), "admin");
         return ResponseEntity.ok(response);
     }
 
@@ -61,6 +66,7 @@ public class OfficeController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteOffice(@PathVariable Long officeId) {
         officeService.deleteOffice(officeId);
+        activityLogService.logActivity("Admin", "Removed office ID " + officeId, "admin");
         return ResponseEntity.noContent().build();
     }
 

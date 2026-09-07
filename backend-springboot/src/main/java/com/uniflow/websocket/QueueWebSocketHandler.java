@@ -1,48 +1,59 @@
 package com.uniflow.websocket;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class QueueWebSocketHandler extends TextWebSocketHandler {
 
-    private final Map<String, WebSocketSession> sessions = new ConcurrentHashMap<>();
+    private static final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        sessions.put(session.getId(), session);
-        System.out.println("✅ WebSocket connection established! Total: " + sessions.size());
+        sessions.add(session);
 
-        // Send welcome message
-        Map<String, Object> welcome = new HashMap<>();
-        welcome.put("event", "connect");
-        welcome.put("message", "Connected to WebSocket");
-        welcome.put("totalConnections", sessions.size());
-        session.sendMessage(new TextMessage(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(welcome)));
+        Map<String, Object> welcome = Map.of(
+                "event", "connect",
+                "message", "Connected to WebSocket"
+        );
+        session.sendMessage(new TextMessage(objectMapper.writeValueAsString(welcome)));
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
-        sessions.remove(session.getId());
-        System.out.println("❌ WebSocket connection closed. Total: " + sessions.size());
+        sessions.remove(session);
     }
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
-        String payload = message.getPayload();
-        System.out.println("Received message: " + payload);
+        // Clients are read-only. Queue updates are handled through local connection events.
+    }
 
-        // Echo back
-        Map<String, Object> response = new HashMap<>();
-        response.put("event", "echo");
-        response.put("message", "Echo: " + payload);
-        session.sendMessage(new TextMessage(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(response)));
+    public void broadcast(Map<String, Object> payload) {
+        String message = "";
+        try {
+            message = objectMapper.writeValueAsString(payload);
+        } catch (Exception ex) {
+            return;
+        }
+
+        for (WebSocketSession session : sessions) {
+            if (session.isOpen()) {
+                try {
+                    session.sendMessage(new TextMessage(message));
+                } catch (Exception ignored) {
+                    sessions.remove(session);
+                }
+            }
+        }
     }
 }
