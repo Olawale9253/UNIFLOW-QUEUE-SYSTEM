@@ -74,7 +74,7 @@ function Dashboard() {
       <div className="user-page">
         {/* Stats Cards */}
         <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <div className="card p-5 card-hover">
+          <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Appointments</p>
@@ -91,7 +91,7 @@ function Dashboard() {
             </Link>
           </div>
 
-          <div className="card p-5 card-hover">
+          <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Queue Tickets</p>
@@ -108,7 +108,7 @@ function Dashboard() {
             </Link>
           </div>
 
-          <div className="card p-5 card-hover">
+          <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Documents</p>
@@ -125,7 +125,7 @@ function Dashboard() {
             </Link>
           </div>
 
-          <div className="card p-5 card-hover">
+          <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Completed</p>
@@ -146,7 +146,7 @@ function Dashboard() {
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">Live Queues</h2>
             <Link to="/queue" className="text-sm text-blue-600 dark:text-blue-400 no-underline">
-              View all queues →
+              View my queues →
             </Link>
           </div>
 
@@ -165,7 +165,7 @@ function Dashboard() {
                 {liveQueues.map((queue) => (
                     <div
                         key={queue.officeId}
-                        className="user-card card-hover"
+                        className="user-card card-hover animate-enter-up"
                     >
                       <div className="flex items-start justify-between">
                         <div>

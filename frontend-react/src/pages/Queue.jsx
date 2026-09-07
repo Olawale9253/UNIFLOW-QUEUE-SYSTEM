@@ -13,6 +13,7 @@ function Queue() {
     const [services, setServices] = useState([]);
     const [liveQueues, setLiveQueues] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [queueSort, setQueueSort] = useState('DEFAULT');
 
     const queueBlocked = myTickets.some(ticket =>
         ticket.status === 'CALLED' || (ticket.status === 'WAITING' && ticket.position <= 2)
@@ -121,6 +122,20 @@ function Queue() {
         return badges[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     };
 
+    const statusOrder = {
+        WAITING: 1,
+        CALLED: 2,
+        COMPLETED: 3,
+        SKIPPED: 4
+    };
+    const sortedMyTickets = [...myTickets].sort((ticketA, ticketB) => {
+        if (queueSort === 'DEFAULT') return 0;
+        if (queueSort === 'STATUS_ASC') {
+            return (statusOrder[ticketA.status] || 99) - (statusOrder[ticketB.status] || 99);
+        }
+        return (statusOrder[ticketB.status] || 99) - (statusOrder[ticketA.status] || 99);
+    });
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -187,12 +202,26 @@ function Queue() {
 
                 {/* My Tickets */}
                 <div className="user-card lg:col-span-2">
-                    <h2 className="user-card-title">My Queue Tickets</h2>
+                    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="user-card-title mb-0">My Queue Tickets</h2>
+                        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <span>Sort by status</span>
+                            <select
+                                value={queueSort}
+                                onChange={(event) => setQueueSort(event.target.value)}
+                                className="input w-auto py-2"
+                            >
+                                <option value="DEFAULT">Recent</option>
+                                <option value="STATUS_ASC">Waiting first</option>
+                                <option value="STATUS_DESC">Skipped first</option>
+                            </select>
+                        </label>
+                    </div>
                     {myTickets.length === 0 ? (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No active queue tickets</p>
                     ) : (
                         <div className="space-y-3">
-                            {myTickets.map((ticket) => (
+                            {sortedMyTickets.map((ticket) => (
                                 <div key={ticket.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 flex justify-between items-center">
                                     <div>
                                         <p className="font-semibold text-gray-900 dark:text-white">{ticket.officeName}</p>

@@ -17,6 +17,7 @@ function Appointments() {
     const [loading, setLoading] = useState(false);
     const [fetchingSlots, setFetchingSlots] = useState(false);
     const [queueBlocked, setQueueBlocked] = useState(false);
+    const [appointmentSort, setAppointmentSort] = useState('DEFAULT');
 
     useEffect(() => {
         const tomorrow = new Date();
@@ -192,6 +193,21 @@ function Appointments() {
         return badges[status] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
     };
 
+    const statusOrder = {
+        PENDING: 1,
+        CONFIRMED: 2,
+        RESCHEDULED: 3,
+        COMPLETED: 4,
+        CANCELLED: 5
+    };
+    const sortedAppointments = [...appointments].sort((appointmentA, appointmentB) => {
+        if (appointmentSort === 'DEFAULT') return 0;
+        if (appointmentSort === 'STATUS_ASC') {
+            return (statusOrder[appointmentA.status] || 99) - (statusOrder[appointmentB.status] || 99);
+        }
+        return (statusOrder[appointmentB.status] || 99) - (statusOrder[appointmentA.status] || 99);
+    });
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
@@ -290,12 +306,26 @@ function Appointments() {
                         )}
                 </div>
                 <div className="user-card lg:col-span-2">
-                    <h2 className="user-card-title">My Appointments</h2>
+                    <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <h2 className="user-card-title mb-0">My Appointments</h2>
+                        <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+                            <span>Sort by status</span>
+                            <select
+                                value={appointmentSort}
+                                onChange={(event) => setAppointmentSort(event.target.value)}
+                                className="input w-auto py-2"
+                            >
+                                <option value="DEFAULT">Soonest</option>
+                                <option value="STATUS_ASC">Pending first</option>
+                                <option value="STATUS_DESC">Rescheduled first</option>
+                            </select>
+                        </label>
+                    </div>
                     {appointments.length === 0 ? (
                         <p className="text-gray-500 dark:text-gray-400 text-center py-8">No appointments booked</p>
                     ) : (
                         <div className="space-y-3">
-                            {appointments.map((appointment) => (
+                            {sortedAppointments.map((appointment) => (
                                 <div key={appointment.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
