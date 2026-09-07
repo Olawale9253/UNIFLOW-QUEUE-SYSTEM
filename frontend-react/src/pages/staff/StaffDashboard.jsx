@@ -25,38 +25,43 @@ function StaffDashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            const officesRes = await api.get('/offices/active');
-            const offices = officesRes.data || [];
-            const officeData = await Promise.all(offices.map(async (office) => {
-                const [appointmentsRes, queueRes, documentsRes, ticketsRes] = await Promise.all([
-                    api.get(`/appointments/office/${office.id}`),
-                    api.get(`/queues/live/${office.id}`),
-                    api.get(`/documents/office/${office.id}`),
-                    api.get(`/queues/office/${office.id}/tickets`)
-                ]);
-                return {
-                    appointments: appointmentsRes.data || [],
-                    queue: queueRes.data || {},
-                    documents: documentsRes.data || [],
-                    tickets: ticketsRes.data || []
-                };
-            }));
+            const profileRes = await api.get('/users/profile');
+            const officeId = profileRes.data?.officeId;
+            if (!officeId) {
+                setStats({ todayAppointments: 0, pendingQueues: 0, pendingDocuments: 0, completedToday: 0 });
+                setRecentTickets([]);
+                return;
+            }
 
-            const appointments = officeData.flatMap(data => data.appointments);
-            const documents = officeData.flatMap(data => data.documents);
-            const tickets = officeData.flatMap(data => data.tickets);
+            const [appointmentsRes, queueRes, documentsRes, ticketsRes] = await Promise.all([
+                api.get(`/appointments/office/${officeId}`),
+                api.get(`/queues/live/${officeId}`),
+                api.get(`/documents/office/${officeId}`),
+                api.get(`/queues/office/${officeId}/tickets`)
+            ]);
+
+            const appointments = appointmentsRes.data || [];
+            const queue = queueRes.data || {};
+            const documents = documentsRes.data || [];
+            const tickets = ticketsRes.data || [];
 
             const today = new Date().toDateString();
+            const isToday = (value) => value && new Date(value).toDateString() === today;
             const todayAppointments = appointments.filter(a =>
-                new Date(a.appointmentTime).toDateString() === today
+                isToday(a.appointmentTime)
+            );
+            const completedTicketsToday = tickets.filter(ticket =>
+                ticket.status === 'COMPLETED' && isToday(ticket.completedAt)
+            );
+            const completedAppointmentsToday = appointments.filter(appointment =>
+                appointment.status === 'COMPLETED' && isToday(appointment.updatedAt)
             );
 
             setStats({
                 todayAppointments: todayAppointments.length,
-                pendingQueues: officeData.reduce((total, data) => total + (data.queue.waitingCount || 0), 0),
-                pendingDocuments: documents.filter(d => d.status === 'SUBMITTED' || d.status === 'UNDER_REVIEW').length,
-                completedToday: tickets.filter(t => t.status === 'COMPLETED').length +
-                    appointments.filter(a => a.status === 'COMPLETED').length
+                pendingQueues: queue.waitingCount || 0,
+                pendingDocuments: documents.filter(d => ['SUBMITTED', 'UNDER_REVIEW', 'PROCESSING'].includes(d.status)).length,
+                completedToday: completedTicketsToday.length + completedAppointmentsToday.length
             });
 
             setRecentTickets(tickets.slice(0, 5));

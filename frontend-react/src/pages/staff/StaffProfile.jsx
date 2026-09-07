@@ -13,6 +13,7 @@ function StaffProfile() {
     useEffect(() => {
         api.get('/users/profile').then(response => {
             setProfile({ fullName: response.data.fullName || '', phone: response.data.phone || '', officeName: response.data.officeName || '', role: response.data.role || '', profileImageUrl: response.data.profileImageUrl || '' });
+            updateUser(response.data);
         }).catch(() => toast.error('Unable to load profile'));
     }, []);
 

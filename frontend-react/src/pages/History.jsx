@@ -12,6 +12,7 @@ const completedStatuses = {
 function History() {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const loadHistory = async () => {
@@ -38,13 +39,30 @@ function History() {
 
     if (loading) return <div className="py-12 text-center text-gray-500">Loading history...</div>;
 
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    const filteredItems = items.filter(item => [
+        item.kind,
+        item.label,
+        item.detail,
+        item.status,
+        formatDateTime(item.updatedAt || item.createdAt)
+    ].some(value => value?.toString().toLowerCase().includes(normalizedSearch)));
+
     return (
         <div className="user-page">
             <h1 className="user-page-title">Request History</h1>
             <div className="user-card">
-                {items.length === 0 ? <p className="py-8 text-center text-gray-500 dark:text-gray-400">No completed requests yet.</p> : (
+                {items.length > 0 && <input
+                    type="search"
+                    value={searchTerm}
+                    onChange={event => setSearchTerm(event.target.value)}
+                    placeholder="Search history..."
+                    aria-label="Search request history"
+                    className="mb-4 w-full rounded-lg border p-3 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                />}
+                {items.length === 0 ? <p className="py-8 text-center text-gray-500 dark:text-gray-400">No completed requests yet.</p> : filteredItems.length === 0 ? <p className="py-8 text-center text-gray-500 dark:text-gray-400">No matching requests found.</p> : (
                     <div className="space-y-3">
-                        {items.map(item => (
+                        {filteredItems.map(item => (
                             <div key={`${item.kind}-${item.id}`} className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 py-4 last:border-0 dark:border-gray-700">
                                 <div>
                                     <p className="font-semibold text-gray-900 dark:text-white">{item.kind} · {item.label}</p>

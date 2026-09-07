@@ -14,8 +14,20 @@ function ProfileImagePicker({ value, onChange }) {
             return;
         }
 
+        const image = new Image();
         const reader = new FileReader();
-        reader.onload = () => onChange(reader.result);
+        reader.onload = () => {
+            image.onload = () => {
+                const maxDimension = 800;
+                const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+                canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+                onChange(canvas.toDataURL('image/jpeg', 0.8));
+            };
+            image.src = reader.result;
+        };
         reader.readAsDataURL(file);
         event.target.value = '';
     };

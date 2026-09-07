@@ -1,8 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 function UserAvatar({ user, size = 'md', fallback = 'U', className = '' }) {
     const [imageFailed, setImageFailed] = useState(false);
     const imageUrl = user?.profileImageUrl || user?.profileImage || user?.avatarUrl || user?.imageUrl;
+
+    useEffect(() => {
+        setImageFailed(false);
+    }, [imageUrl]);
     const sizes = {
         sm: 'h-8 w-8 text-sm',
         md: 'h-10 w-10 text-sm',

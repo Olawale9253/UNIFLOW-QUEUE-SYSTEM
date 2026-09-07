@@ -43,6 +43,7 @@ function Profile() {
                 profileImageUrl: data.profileImageUrl || '',
                 role: data.role || 'STUDENT'
             });
+            updateUser(data);
         } catch (error) {
             console.error('Error fetching profile:', error);
             toast.error('Failed to load profile');

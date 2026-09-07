@@ -311,7 +311,8 @@ public class AppointmentServiceImpl implements AppointmentService {
                 appointment.getAppointmentTime(),
                 appointment.getStatus(),
                 appointment.getReferenceNumber(),
-                appointment.getCreatedAt()
+                appointment.getCreatedAt(),
+                appointment.getUpdatedAt()
         );
     }
 }

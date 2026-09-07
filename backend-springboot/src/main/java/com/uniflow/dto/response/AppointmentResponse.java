@@ -10,6 +10,7 @@ public class AppointmentResponse {
     private String status;
     private String referenceNumber;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // Default constructor
     public AppointmentResponse() {}
@@ -17,7 +18,7 @@ public class AppointmentResponse {
     // Parameterized constructor
     public AppointmentResponse(Long id, String officeName, String serviceName,
                                LocalDateTime appointmentTime, String status,
-                               String referenceNumber, LocalDateTime createdAt) {
+                               String referenceNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.officeName = officeName;
         this.serviceName = serviceName;
@@ -25,6 +26,7 @@ public class AppointmentResponse {
         this.status = status;
         this.referenceNumber = referenceNumber;
         this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Getters and Setters
@@ -48,4 +50,7 @@ public class AppointmentResponse {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }
