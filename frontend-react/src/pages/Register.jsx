@@ -14,7 +14,6 @@ function Register() {
     confirmPassword: '',
     fullName: '',
     phone: '',
-    role: 'STUDENT'
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -148,19 +147,6 @@ function Register() {
               {errors.fullName && (
                   <p className="mt-1 text-sm text-red-500">{errors.fullName}</p>
               )}
-            </div>
-
-            <div className="mb-4">
-              <label className="mb-2 block text-sm font-semibold text-slate-700 dark:text-slate-300">Account Type *</label>
-              <select
-                  name="role"
-                  value={formData.role}
-                  onChange={handleChange}
-                  className="input py-3"
-              >
-                <option value="STUDENT">Student</option>
-                <option value="STAFF">Staff</option>
-              </select>
             </div>
 
             <div className="mb-4">

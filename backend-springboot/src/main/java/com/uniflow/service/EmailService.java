@@ -3,11 +3,15 @@ package com.uniflow.service;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
+
+    @Value("${app.frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     // No-reply email address
     private static final String NO_REPLY_EMAIL = "noreply@uniflow.com";

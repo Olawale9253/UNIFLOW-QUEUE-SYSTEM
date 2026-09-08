@@ -2,23 +2,27 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
+import ErrorState from '../../components/common/ErrorState';
 
 function AdminRegistrationRequests() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [error, setError] = useState('');
 
     useEffect(() => {
         fetchRequests();
     }, []);
 
     const fetchRequests = async () => {
+        setError('');
         try {
             const response = await api.get('/users');
             setUsers((response.data || []).filter(user => !user.approved));
         } catch (error) {
-            console.error('Error fetching registration requests:', error);
-            toast.error('Failed to load registration requests');
+            console.error('Error fetching new user requests:', error);
+            setError(error.response?.data?.message || 'We could not load new user requests right now.');
+            toast.error('Failed to load new user requests');
         } finally {
             setLoading(false);
         }
@@ -47,7 +51,7 @@ function AdminRegistrationRequests() {
                 <div className="flex min-h-[60vh] items-center justify-center">
                     <div className="text-center">
                         <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent" />
-                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading registration requests...</p>
+                        <p className="mt-4 text-gray-600 dark:text-gray-400">Loading new user requests...</p>
                     </div>
                 </div>
             </AdminLayout>
@@ -57,7 +61,7 @@ function AdminRegistrationRequests() {
     return (
         <AdminLayout>
             <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Registration Requests</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">New User Request</h1>
                 <p className="mt-1 text-gray-600 dark:text-gray-400">Review and decide which new accounts can access UniFlow.</p>
                 <div className="mt-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                     <input
@@ -69,6 +73,8 @@ function AdminRegistrationRequests() {
                     />
                 </div>
             </div>
+
+            {error && <ErrorState title="New user requests are unavailable" message={error} onRetry={fetchRequests} />}
 
             <div className="mt-6 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="max-h-[calc(100vh-290px)] overflow-auto">
@@ -97,7 +103,7 @@ function AdminRegistrationRequests() {
                             ))}
                         </tbody>
                     </table>
-                    {filteredUsers.length === 0 && <p className="p-8 text-center text-gray-500 dark:text-gray-400">No pending registration requests found.</p>}
+                    {filteredUsers.length === 0 && <p className="p-8 text-center text-gray-500 dark:text-gray-400">No pending new user requests found.</p>}
                 </div>
             </div>
         </AdminLayout>

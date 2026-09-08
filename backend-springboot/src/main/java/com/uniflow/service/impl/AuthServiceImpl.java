@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -57,11 +56,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPhone(request.getPhone());
         user.setMatriculationNumber(request.getMatriculationNumber());
 
-        String role = request.getRole() != null ? request.getRole() : "STUDENT";
-        if (!Arrays.asList("STUDENT", "STAFF").contains(role)) {
-            role = "STUDENT";
-        }
-        user.setRole(role);
+        user.setRole("STUDENT");
         user.setActive(true);
         user.setApproved(false);
 

@@ -7,6 +7,7 @@ import { AdminProvider } from './context/AdminContext';
 import { WebSocketProvider } from './context/WebSocketContext';
 import { BrandingProvider } from './context/BrandingContext';
 import AdminBranding from './components/admin/AdminBranding';
+import AppErrorBoundary from './components/common/AppErrorBoundary';
 
 // Route Guards
 import ProtectedRoute from './components/common/ProtectedRoute';
@@ -60,6 +61,7 @@ function App() {
                             <BrandingProvider>
                                 <div className="min-h-screen transition-colors duration-300">
                                     <main>
+                                    <AppErrorBoundary>
                                     <Routes>
                                         {/* Public Routes */}
                                         <Route path="/" element={<LandingPage />} />
@@ -195,6 +197,7 @@ function App() {
                                         {/* Catch all */}
                                         <Route path="*" element={<Navigate to="/" replace />} />
                                     </Routes>
+                                    </AppErrorBoundary>
                                     </main>
                                     <Toaster
                                     position="top-right"

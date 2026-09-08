@@ -59,23 +59,16 @@ function AdminStaff() {
                 });
                 toast.success('Staff updated successfully');
             } else {
-                // Create new staff via registration
                 const staffData = {
                     matriculationNumber: `STAFF-${Date.now()}`,
                     email: formData.email,
                     password: formData.password,
                     fullName: formData.fullName,
                     phone: formData.phone,
-                    role: 'STAFF',
+                    officeId: formData.officeId,
                 };
 
-                // Register the user as STAFF so the response gives us its ID immediately.
-                const registrationResponse = await api.post('/auth/register', staffData);
-                const newUserId = registrationResponse.data.userId;
-                await Promise.all([
-                    api.put(`/users/${newUserId}`, { officeId: formData.officeId }),
-                    api.put(`/users/${newUserId}/approve`)
-                ]);
+                await api.post('/users/staff', staffData);
 
                 toast.success('Staff member created successfully');
             }
@@ -182,18 +175,18 @@ function AdminStaff() {
                 {staff.map((member) => (
                     <div key={member.id} className="flex h-full flex-col rounded-xl border border-gray-100 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                         <div className="flex items-start justify-between">
-                            <div className="flex items-center space-x-3">
+                            <div className="flex min-w-0 items-center space-x-3">
                                 <UserAvatar user={member} size="lg" className="h-12 w-12 rounded-full bg-blue-500 text-lg" fallback="S" />
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white">{member.fullName}</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">{member.email}</p>
+                                <div className="min-w-0">
+                                    <h3 className="truncate font-semibold text-gray-900 dark:text-white">{member.fullName}</h3>
+                                    <p className="truncate text-sm text-gray-600 dark:text-gray-400">{member.email}</p>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">ID: {member.matriculationNumber || 'N/A'}</p>
                                 </div>
                             </div>
-                            <div className="flex space-x-2">
+                            <div className="flex shrink-0 space-x-2">
                                 <button
                                     onClick={() => handleEdit(member)}
-                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                                    className="rounded p-1 text-blue-600 dark:text-blue-400 hover:bg-blue-50 hover:text-blue-800 dark:hover:bg-blue-900/30 dark:hover:text-blue-300"
                                     aria-label={`Edit ${member.fullName}`}
                                     title="Edit staff member"
                                 >
@@ -201,7 +194,7 @@ function AdminStaff() {
                                 </button>
                                 <button
                                     onClick={() => handleDelete(member.id)}
-                                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                                    className="rounded p-1 text-red-600 dark:text-red-400 hover:bg-red-50 hover:text-red-800 dark:hover:bg-red-900/30 dark:hover:text-red-300"
                                     aria-label={`Deactivate ${member.fullName}`}
                                     title="Deactivate staff member"
                                 >

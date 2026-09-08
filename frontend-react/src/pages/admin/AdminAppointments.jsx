@@ -3,11 +3,13 @@ import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/notifications';
+import ErrorState from '../../components/common/ErrorState';
 
 function AdminAppointments() {
     const [appointments, setAppointments] = useState([]);
     const [offices, setOffices] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [filters, setFilters] = useState({
         officeId: '',
         status: '',
@@ -23,6 +25,7 @@ function AdminAppointments() {
     }, []);
 
     const fetchData = async () => {
+        setError('');
         try {
             const [appointmentsRes, officesRes] = await Promise.all([
                 api.get('/appointments/all'),
@@ -32,6 +35,7 @@ function AdminAppointments() {
             setOffices(officesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError(error.response?.data?.message || 'We could not load appointments right now.');
             toast.error('Failed to load appointments');
         } finally {
             setLoading(false);
@@ -49,7 +53,7 @@ function AdminAppointments() {
         if (!(await confirmAction('Are you sure you want to cancel this appointment?'))) return;
 
         try {
-            await api.delete(`/appointments/${appointmentId}/cancel`);
+            await api.delete(`/appointments/${appointmentId}/staff-cancel`);
             toast.success('Appointment cancelled');
             fetchData();
         } catch (error) {
@@ -137,8 +141,9 @@ function AdminAppointments() {
 
     return (
         <AdminLayout>
+            {error && <ErrorState title="Appointments are unavailable" message={error} onRetry={fetchData} />}
             <div className="sticky top-0 z-20 -mx-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Appointment</h1>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Appointments</h1>
                 <p className="text-gray-600 dark:text-gray-400 mt-1">View and manage all appointments in the system.</p>
                 <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

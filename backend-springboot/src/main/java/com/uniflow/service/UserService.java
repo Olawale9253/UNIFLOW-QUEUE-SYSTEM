@@ -1,10 +1,12 @@
 package com.uniflow.service;
 
+import com.uniflow.dto.request.CreateStaffRequest;
 import com.uniflow.dto.response.UserResponse;
 
 import java.util.List;
 
 public interface UserService {
+    UserResponse createStaff(CreateStaffRequest request);
     UserResponse getUserProfile(Long userId);
     UserResponse updateUser(Long userId, String fullName, String phone, String email, String profileImageUrl, Long officeId);
     UserResponse updateUserRole(Long userId, String newRole);

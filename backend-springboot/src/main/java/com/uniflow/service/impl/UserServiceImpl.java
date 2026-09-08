@@ -1,5 +1,6 @@
 package com.uniflow.service.impl;
 
+import com.uniflow.dto.request.CreateStaffRequest;
 import com.uniflow.dto.response.UserResponse;
 import com.uniflow.exception.BadRequestException;
 import com.uniflow.exception.ResourceNotFoundException;
@@ -38,6 +39,36 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return mapToUserResponse(user);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse createStaff(CreateStaffRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Email is already registered");
+        }
+        if (userRepository.existsByMatriculationNumber(request.getMatriculationNumber())) {
+            throw new BadRequestException("Matriculation number is already registered");
+        }
+
+        Office office = officeRepository.findById(request.getOfficeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Office not found"));
+        if (userRepository.existsByRoleAndOfficeIdAndActiveTrueAndIdNot("STAFF", request.getOfficeId(), -1L)) {
+            throw new BadRequestException("This office already has an assigned staff member");
+        }
+
+        User user = new User();
+        user.setMatriculationNumber(request.getMatriculationNumber());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setFullName(request.getFullName());
+        user.setPhone(request.getPhone());
+        user.setRole("STAFF");
+        user.setOffice(office);
+        user.setActive(true);
+        user.setApproved(true);
+
+        return mapToUserResponse(userRepository.save(user));
     }
 
     @Override

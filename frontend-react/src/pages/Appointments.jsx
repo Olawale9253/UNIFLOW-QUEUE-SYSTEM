@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../utils/notifications';
+import ErrorState from '../components/common/ErrorState';
 
 function Appointments() {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ function Appointments() {
     const [fetchingSlots, setFetchingSlots] = useState(false);
     const [queueBlocked, setQueueBlocked] = useState(false);
     const [appointmentSort, setAppointmentSort] = useState('DEFAULT');
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const tomorrow = new Date();
@@ -29,6 +31,7 @@ function Appointments() {
 
     const fetchData = async () => {
         setLoading(true);
+        setError('');
         try {
             const [appointmentsRes, officesRes, queuesRes] = await Promise.all([
                 api.get('/appointments/my-appointments'),
@@ -48,6 +51,7 @@ function Appointments() {
             setOffices(uniqueOffices);
         } catch (error) {
             console.error('Error fetching data:', error);
+            setError(error.response?.data?.message || 'We could not load your appointments right now.');
             toast.error('Failed to load data');
         } finally {
             setLoading(false);
@@ -221,6 +225,7 @@ function Appointments() {
 
     return (
         <div className="user-page">
+            {error && <ErrorState title="Appointments are unavailable" message={error} onRetry={fetchData} />}
             <h1 className="user-page-title">Appointments</h1>
 
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">

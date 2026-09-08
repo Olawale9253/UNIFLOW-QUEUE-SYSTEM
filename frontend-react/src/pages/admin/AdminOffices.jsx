@@ -3,11 +3,13 @@ import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/notifications';
+import ErrorState from '../../components/common/ErrorState';
 
 function AdminOffices() {
     const [offices, setOffices] = useState([]);
     const [assignedStaff, setAssignedStaff] = useState({});
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingOffice, setEditingOffice] = useState(null);
     const [formData, setFormData] = useState({
@@ -23,6 +25,7 @@ function AdminOffices() {
     }, []);
 
     const fetchOffices = async () => {
+        setError('');
         try {
             const response = await api.get('/offices');
             const activeOffices = response.data.filter(office => office.active !== false);
@@ -34,6 +37,7 @@ function AdminOffices() {
             setAssignedStaff(Object.fromEntries(staffByOffice));
         } catch (error) {
             console.error('Error fetching offices:', error);
+            setError(error.response?.data?.message || 'We could not load offices right now.');
             toast.error('Failed to load offices');
         } finally {
             setLoading(false);
@@ -97,9 +101,10 @@ function AdminOffices() {
 
     return (
         <AdminLayout>
+            {error && <ErrorState title="Offices are unavailable" message={error} onRetry={fetchOffices} />}
             <div className="sticky top-0 z-20 -mx-4 flex flex-wrap items-center justify-between gap-4 bg-gradient-primary px-4 pb-4 sm:-mx-6 sm:px-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Office</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Offices</h1>
                     <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all offices and their services.</p>
                 </div>
                 <button

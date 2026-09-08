@@ -1,5 +1,6 @@
 package com.uniflow.controller;
 
+import com.uniflow.dto.request.CreateStaffRequest;
 import com.uniflow.dto.response.UserResponse;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.UserService;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,14 @@ public class UserController {
     public ResponseEntity<UserResponse> getProfile(@AuthenticationPrincipal CustomUserDetails userDetails) {
         UserResponse response = userService.getUserProfile(userDetails.getId());
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/staff")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<UserResponse> createStaff(@Valid @RequestBody CreateStaffRequest request) {
+        UserResponse response = userService.createStaff(request);
+        activityLogService.logActivity("Admin", "Created staff account: " + response.getFullName(), "admin");
+        return ResponseEntity.status(201).body(response);
     }
 
     @PutMapping("/{userId}")

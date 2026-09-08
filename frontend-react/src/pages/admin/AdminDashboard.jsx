@@ -5,6 +5,7 @@ import AdminLayout from '../../components/admin/AdminLayout';
 import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBranding } from '../../context/BrandingContext';
+import ErrorState from '../../components/common/ErrorState';
 
 function AdminDashboard() {
     const { user } = useAuth();
@@ -23,6 +24,7 @@ function AdminDashboard() {
     const [recentActivities, setRecentActivities] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isPolling, setIsPolling] = useState(false);
+    const [error, setError] = useState('');
     const prevActivitiesRef = useRef([]);
 
     const formatTime = (timestamp) => {
@@ -68,6 +70,7 @@ function AdminDashboard() {
     };
 
     const fetchDashboardData = useCallback(async (isInitial = false) => {
+        setError('');
         try {
             // Only show loading on initial load
             if (isInitial) {
@@ -144,6 +147,7 @@ function AdminDashboard() {
 
         } catch (error) {
             console.error('❌ Error fetching dashboard data:', error);
+            setError(error.response?.data?.message || 'We could not load the dashboard right now.');
             if (isInitial) {
                 toast.error('Failed to load dashboard data');
             }
@@ -186,6 +190,7 @@ function AdminDashboard() {
 
     return (
         <AdminLayout>
+            {error && <ErrorState title="Dashboard data is unavailable" message={error} onRetry={() => fetchDashboardData(true)} />}
             {/* Stats Cards - No flickering */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
                 <div className="card card-hover p-5">
@@ -242,6 +247,17 @@ function AdminDashboard() {
                             </svg>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-blue-100 bg-blue-50 p-5 dark:border-blue-900/50 dark:bg-blue-950/30">
+                <div>
+                    <h2 className="font-semibold text-gray-900 dark:text-white">Admin actions</h2>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Keep today&apos;s requests and appointments moving.</p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                    <Link to="/admin/registration-requests" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Review new user requests</Link>
+                    <Link to="/admin/appointments" className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:border-blue-800 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-blue-900/40">Manage appointments</Link>
                 </div>
             </div>
 
