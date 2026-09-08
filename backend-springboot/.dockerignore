@@ -1,0 +1,11 @@
+target/
+*.log
+.git/
+.gitignore
+README.md
+.DS_Store
+target/
+*.log
+.git/
+.gitignore
+README.md
