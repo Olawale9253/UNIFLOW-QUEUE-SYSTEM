@@ -1,13 +1,13 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/uniflow_db
-    username: postgres
-    password: Walex@2020
+    url: ${jdbc:postgresql://db.bpdcpjwwqkteqpqxiusz.supabase.co:5432/postgres?sslmode=require}
+    username: ${db.bpdcpjwwqkteqpqxiusz.supabase.co}
+    password: ${Gq-*6r6d#g2vNJD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
       connection-timeout: 30000
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: false
