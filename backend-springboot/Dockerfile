@@ -1,5 +1,5 @@
 # Build stage
-FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
+FROM maven:3.9.6-amazoncorretto-17-al2023 AS build
 
 WORKDIR /app
 
@@ -12,11 +12,11 @@ COPY src src
 RUN mvn clean package -DskipTests
 
 # Runtime stage
-FROM openjdk:17-jdk-slim-buster
+FROM amazoncorretto:17-alpine
 
 WORKDIR /app
 
-# Copy the built JAR from the build stage
+# Copy the built JAR
 COPY --from=build /app/target/*.jar app.jar
 
 EXPOSE 8080
