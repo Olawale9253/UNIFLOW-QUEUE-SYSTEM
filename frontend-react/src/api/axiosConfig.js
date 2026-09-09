@@ -24,8 +24,10 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         const publicAuthRequest = ['/auth/login', '/auth/register'].some(path => error.config?.url?.includes(path));
-        if (error.response?.status === 401 && !publicAuthRequest) {
+        const unauthorized = error.response?.status === 401 || error.response?.status === 403;
+        if (unauthorized && !publicAuthRequest) {
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
             window.location.href = '/login';
         }
         return Promise.reject(error);

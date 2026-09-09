@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../utils/notifications';
+import { useWebSocket } from '../context/WebSocketContext';
 
 function Queue() {
+    const { queueUpdateVersion } = useWebSocket();
     const navigate = useNavigate();
     const [offices, setOffices] = useState([]);
     const [myTickets, setMyTickets] = useState([]);
@@ -24,7 +26,7 @@ function Queue() {
         const interval = setInterval(fetchLiveQueues, 10000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [queueUpdateVersion]);
 
     const fetchData = async () => {
         try {

@@ -3,9 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axiosConfig';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import { useWebSocket } from '../context/WebSocketContext';
 
 function Dashboard() {
   const { user } = useAuth();
+  const { queueUpdateVersion } = useWebSocket();
   const navigate = useNavigate();
   const [liveQueues, setLiveQueues] = useState([]);
   const [stats, setStats] = useState({
@@ -22,7 +24,7 @@ function Dashboard() {
       return;
     }
     fetchDashboardData();
-  }, [user, navigate]);
+  }, [user, navigate, queueUpdateVersion]);
 
   const fetchDashboardData = async () => {
     try {

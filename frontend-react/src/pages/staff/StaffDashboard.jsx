@@ -4,9 +4,11 @@ import api from '../../api/axiosConfig';
 import { useAuth } from '../../context/AuthContext';
 import StaffLayout from '../../components/staff/StaffLayout';
 import toast from 'react-hot-toast';
+import { useWebSocket } from '../../context/WebSocketContext';
 
 function StaffDashboard() {
     const { user } = useAuth();
+    const { queueUpdateVersion } = useWebSocket();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         todayAppointments: 0,
@@ -21,7 +23,7 @@ function StaffDashboard() {
         const interval = setInterval(fetchDashboardData, 10000);
 
         return () => clearInterval(interval);
-    }, []);
+    }, [queueUpdateVersion]);
 
     const fetchDashboardData = async () => {
         try {

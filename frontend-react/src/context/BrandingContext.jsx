@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import api from '../api/axiosConfig';
+import defaultSchoolLogo from '../assets/images/school-logo-fallback.svg';
 
 const BrandingContext = createContext();
 
@@ -22,7 +23,7 @@ const getStoredBranding = () => {
 export function BrandingProvider({ children }) {
   const [branding, setBranding] = useState(() => ({
     ...getStoredBranding(),
-    logo: '',
+    logo: defaultSchoolLogo,
     logoUrl: '',
     loading: false
   }));
@@ -36,12 +37,12 @@ export function BrandingProvider({ children }) {
           ...prev,
           schoolName: settings.siteName || prev.schoolName || '',
           logoUrl: settings.logoUrl || '',
-          logo: settings.logoUrl || '',
+          logo: settings.logoUrl || defaultSchoolLogo,
           loading: false
         }));
       } catch (error) {
         const savedBranding = getStoredBranding();
-        setBranding(prev => ({ ...prev, ...savedBranding, logo: savedBranding.logoUrl || '' }));
+        setBranding(prev => ({ ...prev, ...savedBranding, logo: savedBranding.logoUrl || defaultSchoolLogo }));
       }
     };
 
@@ -53,6 +54,13 @@ export function BrandingProvider({ children }) {
       localStorage.setItem(brandingStorageKey, JSON.stringify({ schoolName: branding.schoolName }));
     }
   }, [branding.schoolName]);
+
+  useEffect(() => {
+    const favicon = document.querySelector('link[rel="icon"]');
+    if (favicon) {
+      favicon.href = branding.logo || defaultSchoolLogo;
+    }
+  }, [branding.logo]);
 
   const saveBranding = async (schoolName, logoUrl) => {
     const response = await api.get('/system/settings');
@@ -66,7 +74,7 @@ export function BrandingProvider({ children }) {
       ...prev,
       schoolName: saved.data.siteName || schoolName,
       logoUrl: saved.data.logoUrl || '',
-      logo: saved.data.logoUrl || '',
+      logo: saved.data.logoUrl || defaultSchoolLogo,
       loading: false
     }));
   };
@@ -86,15 +94,14 @@ export function BrandingProvider({ children }) {
   // Upload logo
   const uploadLogo = async (file) => {
     setBranding(prev => ({ ...prev, loading: true }));
-    
+
     try {
-      const base64String = await new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await api.post('/system/settings/logo', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
-      await saveBranding(branding.schoolName, base64String);
+      await saveBranding(branding.schoolName, response.data.logoUrl);
       toast.success('Logo uploaded successfully!');
     } catch (error) {
       console.error('Error uploading logo:', error);
@@ -136,7 +143,7 @@ export function BrandingProvider({ children }) {
         ...prev,
         schoolName: settings.siteName || prev.schoolName || '',
         logoUrl: settings.logoUrl || '',
-        logo: settings.logoUrl || ''
+        logo: settings.logoUrl || defaultSchoolLogo
       }));
     } catch (error) {
       console.error('Error refreshing branding:', error);

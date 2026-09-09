@@ -6,10 +6,12 @@ import { useAuth } from '../../context/AuthContext';
 import toast from 'react-hot-toast';
 import { useBranding } from '../../context/BrandingContext';
 import ErrorState from '../../components/common/ErrorState';
+import { useWebSocket } from '../../context/WebSocketContext';
 
 function AdminDashboard() {
     const { user } = useAuth();
     const { branding } = useBranding();
+    const { queueUpdateVersion } = useWebSocket();
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalAppointments: 0,
@@ -157,7 +159,7 @@ function AdminDashboard() {
             }
             setIsPolling(false);
         }
-    }, []);
+    }, [queueUpdateVersion]);
 
     // Initial load
     useEffect(() => {

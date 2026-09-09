@@ -4,9 +4,11 @@ import StaffLayout from '../../components/staff/StaffLayout';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/notifications';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../context/WebSocketContext';
 
 function StaffQueue() {
     const { user } = useAuth();
+    const { queueUpdateVersion } = useWebSocket();
     const [offices, setOffices] = useState([]);
     const [selectedOffice, setSelectedOffice] = useState('');
     const [queues, setQueues] = useState([]);
@@ -22,7 +24,7 @@ function StaffQueue() {
             const interval = setInterval(fetchQueue, 10000);
             return () => clearInterval(interval);
         }
-    }, [selectedOffice]);
+    }, [selectedOffice, queueUpdateVersion]);
 
     const fetchOffices = async () => {
         try {

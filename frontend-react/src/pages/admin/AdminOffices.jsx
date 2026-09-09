@@ -11,7 +11,10 @@ function AdminOffices() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const [showServiceModal, setShowServiceModal] = useState(false);
     const [editingOffice, setEditingOffice] = useState(null);
+    const [serviceOffice, setServiceOffice] = useState(null);
+    const [serviceForm, setServiceForm] = useState({ name: '', description: '', duration: 30 });
     const [formData, setFormData] = useState({
         name: '',
         description: '',
@@ -71,6 +74,31 @@ function AdminOffices() {
             fetchOffices();
         } catch (error) {
             toast.error('Failed to delete office');
+        }
+    };
+
+    const openServiceModal = (office) => {
+        setServiceOffice(office);
+        setServiceForm({ name: '', description: '', duration: 30 });
+        setShowServiceModal(true);
+    };
+
+    const handleServiceSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.post(`/offices/${serviceOffice.id}/services`, null, {
+                params: {
+                    name: serviceForm.name,
+                    description: serviceForm.description || undefined,
+                    duration: serviceForm.duration
+                }
+            });
+            toast.success('Service added to office');
+            setShowServiceModal(false);
+            setServiceOffice(null);
+            await fetchOffices();
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to add service');
         }
     };
 
@@ -157,6 +185,30 @@ function AdminOffices() {
                                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" d="M4 7h16M10 11v6m4-6v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
                                 </button>
                             </div>
+                        </div>
+                        <div className="mt-5 border-t border-gray-100 pt-4 dark:border-gray-700">
+                            <div className="flex items-center justify-between gap-3">
+                                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Services</h4>
+                                <button
+                                    type="button"
+                                    onClick={() => openServiceModal(office)}
+                                    className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700"
+                                >
+                                    + Add service
+                                </button>
+                            </div>
+                            {office.services?.length ? (
+                                <ul className="mt-3 space-y-2">
+                                    {office.services.map((service) => (
+                                        <li key={service.id} className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm dark:bg-gray-700/60">
+                                            <span className="text-gray-800 dark:text-gray-200">{service.name}</span>
+                                            <span className="text-xs text-gray-500 dark:text-gray-400">{service.durationMinutes} min</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">No services added yet.</p>
+                            )}
                         </div>
                     </div>
                 ))}
@@ -246,6 +298,54 @@ function AdminOffices() {
                                 >
                                     Cancel
                                 </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showServiceModal && serviceOffice && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md rounded-xl bg-white p-6 dark:bg-gray-800">
+                        <h2 className="mb-1 text-xl font-bold text-gray-900 dark:text-white">Add service</h2>
+                        <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">Add a queue option under {serviceOffice.name}.</p>
+                        <form onSubmit={handleServiceSubmit}>
+                            <div className="mb-4">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Service name</label>
+                                <input
+                                    type="text"
+                                    value={serviceForm.name}
+                                    onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
+                                    className="w-full rounded-lg border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    required
+                                    maxLength="100"
+                                />
+                            </div>
+                            <div className="mb-4">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                                <textarea
+                                    value={serviceForm.description}
+                                    onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
+                                    className="w-full rounded-lg border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    rows="2"
+                                    maxLength="500"
+                                />
+                            </div>
+                            <div className="mb-5">
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Duration (minutes)</label>
+                                <input
+                                    type="number"
+                                    value={serviceForm.duration}
+                                    onChange={(e) => setServiceForm({ ...serviceForm, duration: parseInt(e.target.value, 10) })}
+                                    className="w-full rounded-lg border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    min="1"
+                                    max="240"
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button type="submit" className="flex-1 rounded-lg bg-blue-600 py-2 text-white transition hover:bg-blue-700">Add service</button>
+                                <button type="button" onClick={() => setShowServiceModal(false)} className="flex-1 rounded-lg bg-gray-200 py-2 text-gray-700 transition hover:bg-gray-300 dark:bg-gray-600 dark:text-gray-200 dark:hover:bg-gray-500">Cancel</button>
                             </div>
                         </form>
                     </div>

@@ -15,6 +15,7 @@ import com.uniflow.repository.ServiceRepository;
 import com.uniflow.repository.UserRepository;
 import com.uniflow.service.QueueService;
 import com.uniflow.service.NotificationService;
+import com.uniflow.websocket.QueueWebSocketHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,7 @@ public class QueueServiceImpl implements QueueService {
     private final ServiceRepository serviceRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
+    private final QueueWebSocketHandler queueWebSocketHandler;
 
     private static final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
@@ -38,12 +40,14 @@ public class QueueServiceImpl implements QueueService {
                             OfficeRepository officeRepository,
                             ServiceRepository serviceRepository,
                             UserRepository userRepository,
-                            NotificationService notificationService) {
+                            NotificationService notificationService,
+                            QueueWebSocketHandler queueWebSocketHandler) {
         this.queueTicketRepository = queueTicketRepository;
         this.officeRepository = officeRepository;
         this.serviceRepository = serviceRepository;
         this.userRepository = userRepository;
         this.notificationService = notificationService;
+        this.queueWebSocketHandler = queueWebSocketHandler;
     }
 
     @Override
@@ -112,6 +116,7 @@ public class QueueServiceImpl implements QueueService {
                 + " at " + office.getName() + " has been created.",
             "queue"
         );
+        broadcastQueueUpdate("JOINED", office.getId(), savedTicket.getId());
 
         return mapToQueueResponse(queueTicketRepository.findById(savedTicket.getId()).orElse(savedTicket));
     }
@@ -193,6 +198,7 @@ public class QueueServiceImpl implements QueueService {
         notificationService.createNotificationForOfficeStaff(
             ticket.getOffice().getId(), "Queue ticket called",
             "Ticket " + ticket.getTicketNumber() + " is now being served.", "queue");
+        broadcastQueueUpdate("CALLED", ticket.getOffice().getId(), updatedTicket.getId());
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -221,6 +227,7 @@ public class QueueServiceImpl implements QueueService {
         notificationService.createNotificationForOfficeStaff(
             ticket.getOffice().getId(), "Queue ticket completed",
             "Ticket " + ticket.getTicketNumber() + " has been completed.", "queue");
+        broadcastQueueUpdate("COMPLETED", ticket.getOffice().getId(), updatedTicket.getId());
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -248,6 +255,7 @@ public class QueueServiceImpl implements QueueService {
         notificationService.createNotificationForOfficeStaff(
             ticket.getOffice().getId(), "Queue ticket skipped",
             "Ticket " + ticket.getTicketNumber() + " was skipped.", "queue");
+        broadcastQueueUpdate("SKIPPED", ticket.getOffice().getId(), updatedTicket.getId());
 
         return mapToQueueResponse(updatedTicket);
     }
@@ -275,6 +283,7 @@ public class QueueServiceImpl implements QueueService {
                 "Your ticket " + ticket.getTicketNumber() + " was moved to the end of the queue.",
                 "queue"
         );
+            broadcastQueueUpdate("RESCHEDULED", ticket.getOffice().getId(), updatedTicket.getId());
         return mapToQueueResponse(updatedTicket);
     }
 
@@ -336,5 +345,15 @@ public class QueueServiceImpl implements QueueService {
                 ticket.getCalledAt() != null ? ticket.getCalledAt().toString() : null,
                 ticket.getCompletedAt() != null ? ticket.getCompletedAt().toString() : null
         );
+    }
+
+    private void broadcastQueueUpdate(String action, Long officeId, Long ticketId) {
+        queueWebSocketHandler.broadcast(java.util.Map.of(
+                "event", "queue-update",
+                "action", action,
+                "officeId", officeId,
+                "ticketId", ticketId,
+                "timestamp", LocalDateTime.now().toString()
+        ));
     }
 }

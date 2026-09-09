@@ -11,6 +11,7 @@ export function WebSocketProvider({ children }) {
     const { user } = useAuth();
     const [connected, setConnected] = useState(false);
     const [queueEvents, setQueueEvents] = useState([]);
+    const [queueUpdateVersion, setQueueUpdateVersion] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -29,6 +30,7 @@ export function WebSocketProvider({ children }) {
         const removeDisconnectListener = websocketService.on('disconnect', () => setConnected(false));
         const removeQueueListener = websocketService.on('queue-update', (event) => {
             setQueueEvents(previous => [event, ...previous].slice(0, 50));
+            setQueueUpdateVersion(previous => previous + 1);
         });
 
         const interval = setInterval(() => {
@@ -83,6 +85,7 @@ export function WebSocketProvider({ children }) {
         <WebSocketContext.Provider value={{
             connected,
             queueEvents,
+            queueUpdateVersion,
             notifications,
             unreadCount,
             markAllAsRead,
