@@ -17,6 +17,7 @@ function Dashboard() {
     completed: 0
   });
   const [loading, setLoading] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -24,20 +25,26 @@ function Dashboard() {
       return;
     }
     fetchDashboardData();
-  }, [user, navigate, queueUpdateVersion]);
+  }, [user, navigate]);
+
+  useEffect(() => {
+    if (hasLoaded && queueUpdateVersion > 0) {
+      refreshLiveQueues();
+    }
+  }, [queueUpdateVersion, hasLoaded]);
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true);
+      if (!hasLoaded) setLoading(true);
 
-      const queuesRes = await api.get('/queues/live/all');
-      setLiveQueues(queuesRes.data);
-
-      const [appointmentsRes, ticketsRes, documentsRes] = await Promise.all([
+      const [queuesRes, appointmentsRes, ticketsRes, documentsRes] = await Promise.all([
+        api.get('/queues/live/all'),
         api.get('/appointments/my-appointments'),
         api.get('/queues/my-tickets'),
         api.get('/documents/my-requests')
       ]);
+
+      setLiveQueues(queuesRes.data || []);
 
       const appointments = appointmentsRes.data || [];
       const tickets = ticketsRes.data || [];
@@ -52,12 +59,22 @@ function Dashboard() {
         documents: documents.length,
         completed: completedAppointments + completedTickets
       });
+      setHasLoaded(true);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('Failed to load dashboard data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const refreshLiveQueues = async () => {
+    try {
+      const response = await api.get('/queues/live/all');
+      setLiveQueues(response.data || []);
+    } catch (error) {
+      console.error('Error refreshing live queues:', error);
     }
   };
 
@@ -79,7 +96,7 @@ function Dashboard() {
           <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Appointments</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">My Appointments</p>
                 <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.appointments}</p>
               </div>
               <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
@@ -96,7 +113,7 @@ function Dashboard() {
           <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Queue Tickets</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">My Queue Tickets</p>
                 <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.queueTickets}</p>
               </div>
               <div className="w-12 h-12 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center">
@@ -113,7 +130,7 @@ function Dashboard() {
           <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Documents</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">My Documents</p>
                 <p className="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{stats.documents}</p>
               </div>
               <div className="w-12 h-12 bg-purple-50 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
@@ -130,7 +147,7 @@ function Dashboard() {
           <div className="card p-5 card-hover animate-enter-up">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Completed</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-medium">Completed Tasks</p>
                 <p className="text-2xl font-bold text-orange-600 dark:text-orange-400 mt-1">{stats.completed}</p>
               </div>
               <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/30 rounded-full flex items-center justify-center">

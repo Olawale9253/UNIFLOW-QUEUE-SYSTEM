@@ -79,7 +79,7 @@ function Login() {
         <div className="card w-full max-w-md p-6 sm:p-8">
           <div className="text-center mb-8">
             <Link to="/">
-              {branding.logo ? <img src={branding.logo} alt="School logo" className="mx-auto h-12 w-12 object-contain" /> : <SchoolLogoPlaceholder className="mx-auto h-12 w-12" />}
+              {branding.logo ? <img src={branding.logo} alt="School logo" loading="eager" fetchPriority="high" decoding="async" className="mx-auto h-12 w-12 object-contain" /> : <SchoolLogoPlaceholder className="mx-auto h-12 w-12" />}
               <h1 className="gradient-text text-3xl font-black">{branding.schoolName}</h1>
             </Link>
             <p className="mt-2 text-slate-600 dark:text-slate-400">Sign in to your account</p>

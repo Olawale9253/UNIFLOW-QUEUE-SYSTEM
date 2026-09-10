@@ -230,7 +230,7 @@ function Appointments() {
 
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Book Appointment Form */}
-                <div className="user-card self-start lg:sticky lg:top-24 lg:col-span-1">
+                <div className="user-card self-start overflow-visible lg:col-span-1">
                     <h2 className="user-card-title">Book Appointment</h2>
                     <form onSubmit={handleBookAppointment}>
                         <div className="mb-4">

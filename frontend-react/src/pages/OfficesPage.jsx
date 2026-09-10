@@ -47,7 +47,7 @@ const Offices = () => {
             <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-3">
                 {/* Office List */}
                 <div className="lg:col-span-1">
-                    <div className="user-card">
+                    <div className="user-card overflow-visible">
                         <h2 className="user-card-title">All Offices</h2>
                         <div className="space-y-2">
                             {offices.map((office) => (

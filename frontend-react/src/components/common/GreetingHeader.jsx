@@ -1,11 +1,12 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
+import toast from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import NotificationBell from './NotificationBell';
 import UserAvatar from './UserAvatar';
 
 function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     const getGreeting = () => {
@@ -16,6 +17,12 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
     };
 
     const getFirstName = () => user?.fullName?.split(' ')[0] || 'there';
+    const handleLogout = () => {
+        logout();
+        toast.success('Logged out successfully');
+        navigate('/login');
+    };
+
     return (
         <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-6 lg:px-8 lg:rounded-bl-3xl">
             <div className="flex min-h-14 items-center justify-between gap-4">
@@ -46,6 +53,17 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
                         title="My profile"
                     >
                         <UserAvatar user={user} size="sm" />
+                    </button>
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="rounded-lg p-2 text-gray-600 transition hover:bg-red-50 hover:text-red-600 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+                        aria-label="Log out"
+                        title="Log out"
+                    >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 17l5-5-5-5M15 12H3m8 8h7a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-7" />
+                        </svg>
                     </button>
                 </div>
             </div>

@@ -13,9 +13,9 @@ function UserLayout({ children, showSidebar = true }) {
 
     const menuItems = [
         { path: '/dashboard', label: 'Home' },
-        { path: '/queue', label: 'Queue' },
-        { path: '/appointments', label: 'Appointments' },
-        { path: '/documents', label: 'Documents' },
+        { path: '/queue', label: 'My Queue Tickets' },
+        { path: '/appointments', label: 'My Appointments' },
+        { path: '/documents', label: 'My Documents' },
         { path: '/history', label: 'History' },
         { path: '/offices', label: 'Offices' },
     ];
@@ -79,7 +79,7 @@ function UserLayout({ children, showSidebar = true }) {
                         <SchoolBranding showName={true} showLogo={true} layout="stacked" />
                     </div>
 
-                    <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/70">
+                    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/70">
                         <div className="space-y-1">
                             {menuItems.map((item) => (
                                 <Link
@@ -108,6 +108,10 @@ function UserLayout({ children, showSidebar = true }) {
                             {renderMenuIcon('/settings')}
                             Settings
                         </Link>
+                        <div className="my-3 border-t border-gray-200 pt-3 dark:border-gray-700">
+                            <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{user?.fullName || 'Student'}</p>
+                            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{user?.email || 'No email available'}</p>
+                        </div>
                         <button
                             onClick={handleLogout}
                             className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-red-600 transition hover:bg-white dark:text-red-400 dark:hover:bg-gray-700"

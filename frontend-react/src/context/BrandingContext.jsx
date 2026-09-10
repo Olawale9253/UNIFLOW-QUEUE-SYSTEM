@@ -23,8 +23,8 @@ const getStoredBranding = () => {
 export function BrandingProvider({ children }) {
   const [branding, setBranding] = useState(() => ({
     ...getStoredBranding(),
-    logo: defaultSchoolLogo,
-    logoUrl: '',
+    logo: getStoredBranding().logoUrl || defaultSchoolLogo,
+    logoUrl: getStoredBranding().logoUrl || '',
     loading: false
   }));
 
@@ -51,7 +51,7 @@ export function BrandingProvider({ children }) {
 
   useEffect(() => {
     if (branding.schoolName) {
-      localStorage.setItem(brandingStorageKey, JSON.stringify({ schoolName: branding.schoolName }));
+      localStorage.setItem(brandingStorageKey, JSON.stringify({ schoolName: branding.schoolName, logoUrl: branding.logoUrl }));
     }
   }, [branding.schoolName]);
 

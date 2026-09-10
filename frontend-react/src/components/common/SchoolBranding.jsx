@@ -14,6 +14,8 @@ function SchoolBranding({ className = '', showLogo = true, showName = true, layo
             <img
               src={branding.logo}
               alt={branding.schoolName || 'School logo'}
+              loading="eager"
+              decoding="async"
               className={`${isStacked ? 'h-28 w-28' : 'h-10 w-10'} object-contain rounded-lg`}
             />
           ) : (
