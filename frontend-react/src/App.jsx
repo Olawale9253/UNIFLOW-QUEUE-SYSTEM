@@ -4,8 +4,8 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdminProvider } from './context/AdminContext';
-import { WebSocketProvider } from './context/WebSocketContext';
-import { BrandingProvider } from './context/BrandingContext';
+import { WebSocketProvider, useWebSocket } from './context/WebSocketContext';
+import { BrandingProvider, useBranding } from './context/BrandingContext';
 import AdminBranding from './components/admin/AdminBranding';
 import AppErrorBoundary from './components/common/AppErrorBoundary';
 
