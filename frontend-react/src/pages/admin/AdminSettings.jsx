@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useTheme } from '../../context/ThemeContext';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import { confirmAction } from '../../utils/notifications';
@@ -7,7 +6,6 @@ import api from '../../api/axiosConfig';
 import { useBranding } from '../../context/BrandingContext';
 
 function AdminSettings() {
-    const { darkMode, toggleDarkMode } = useTheme();
     const { refreshBranding } = useBranding();
     const [settings, setSettings] = useState({
         enableRegistration: true,
@@ -219,17 +217,6 @@ function AdminSettings() {
                                 description="Put the system in maintenance mode"
                             />
                         </div>
-                    </div>
-
-                    {/* Appearance */}
-                    <div className="mb-8">
-                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Appearance</h2>
-                        <ToggleSwitch
-                            enabled={darkMode}
-                            onChange={toggleDarkMode}
-                            label="Dark Mode"
-                            description="Toggle dark/light theme"
-                        />
                     </div>
 
                     {/* Actions */}

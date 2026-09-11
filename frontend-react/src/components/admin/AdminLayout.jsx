@@ -67,10 +67,10 @@ function AdminLayout({ children }) {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+        <div className="premium-page min-h-screen bg-slate-50 dark:bg-slate-950">
             <div className="flex min-h-screen">
                 {isSidebarOpen && <button className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" onClick={() => setIsSidebarOpen(false)} aria-label="Close admin navigation" />}
-                <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-900 lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
+                <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-slate-200/80 bg-white/95 shadow-xl backdrop-blur-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-900/95 lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
                     <div className="flex min-h-0 flex-1 flex-col p-4">
                         <div className="mb-4 flex justify-end lg:hidden">
                             <button onClick={() => setIsSidebarOpen(false)} className="rounded-lg p-2 text-gray-600 transition hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700" aria-label="Hide admin navigation" title="Hide navigation">
@@ -80,7 +80,7 @@ function AdminLayout({ children }) {
                         <div className="mb-6 border-b border-gray-200 pb-6 dark:border-slate-800">
                             <SchoolBranding showName={true} showLogo={true} layout="stacked" />
                         </div>
-                        <div className="min-h-0 flex-1 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/70">
+                        <div className="min-h-0 flex-1 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50/90 p-3 dark:border-slate-700 dark:bg-slate-800/70">
                             <div className="space-y-1">
                                 {menuItems.map((item) => (
                                     <Link

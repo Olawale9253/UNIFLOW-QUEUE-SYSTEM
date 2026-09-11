@@ -108,36 +108,90 @@ function AdminOffices() {
             </div>
 
             {/* Offices Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {offices.map((office) => (
-                    <div key={office.id} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 border border-gray-100 dark:border-gray-700">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{office.name}</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{office.description || 'No description'}</p>
-                                <div className="mt-3 space-y-1">
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Hours: {office.workingHoursStart} - {office.workingHoursEnd}</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Slot: {office.slotDurationMinutes} min</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Services: {office.services?.length || 0}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {offices.map((office) => {
+                    const services = office.services || [];
+
+                    return (
+                        <div key={office.id} className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-slate-700 dark:bg-slate-900">
+                            <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-700 dark:bg-slate-800/80">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100 text-lg text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300">
+                                        🏢
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{office.name}</h3>
+                                        <p className="text-xs uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Office</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleEdit(office)}
+                                        className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:border-indigo-500 dark:hover:text-indigo-300"
+                                        aria-label={`Edit ${office.name}`}
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(office.id)}
+                                        className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-sm text-red-600 transition hover:bg-red-100 dark:border-red-900/60 dark:bg-red-500/10 dark:text-red-300 dark:hover:bg-red-500/15"
+                                        aria-label={`Delete ${office.name}`}
+                                    >
+                                        Delete
+                                    </button>
                                 </div>
                             </div>
-                            <div className="flex space-x-2">
-                                <button
-                                    onClick={() => handleEdit(office)}
-                                    className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(office.id)}
-                                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                                >
-                                    🗑️
-                                </button>
+
+                            <div className="space-y-4 p-5">
+                                <p className="text-sm leading-6 text-slate-600 dark:text-slate-300">
+                                    {office.description || 'No description provided for this office yet.'}
+                                </p>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/70">
+                                        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Hours</p>
+                                        <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-200">
+                                            {office.workingHoursStart} - {office.workingHoursEnd}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/70">
+                                        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Slot</p>
+                                        <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-200">
+                                            {office.slotDurationMinutes} min
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Services</p>
+                                        <span className="rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300">
+                                            {services.length} linked
+                                        </span>
+                                    </div>
+
+                                    {services.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {services.map((service) => (
+                                                <span
+                                                    key={service.id || service.name}
+                                                    className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
+                                                >
+                                                    {service.name}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-800/60 dark:text-slate-400">
+                                            No services configured yet.
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {offices.length === 0 && (

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,14 +22,16 @@
 
   body {
     @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased transition-colors duration-300;
-    background-image: linear-gradient(180deg, rgba(248, 250, 252, 0.92), rgba(241, 245, 249, 0.98));
+    background-color: #f6f8fb;
+    background-image: radial-gradient(circle at 90% 0%, rgba(224, 231, 255, 0.58), transparent 30rem), linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 248, 251, 0.98));
     min-height: 100vh;
     background-attachment: fixed;
   }
   .dark body {
-    background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.99));
+    background-color: #0b1120;
+    background-image: radial-gradient(circle at 90% 0%, rgba(30, 41, 59, 0.72), transparent 30rem), linear-gradient(180deg, rgba(15, 23, 42, 0.96), rgba(2, 6, 23, 0.99));
   }
-  h1, h2, h3, h4, h5, h6 { @apply font-sans; }
+  h1, h2, h3, h4, h5, h6 { @apply font-sans tracking-tight; }
   ::-webkit-scrollbar {
     @apply w-2 h-2;
   }
@@ -41,7 +45,7 @@
 
 @layer components {
   .card {
-    @apply bg-white dark:bg-slate-900 rounded-xl shadow-soft border border-slate-200/80 dark:border-slate-800 transition-shadow duration-200;
+    @apply bg-white/95 dark:bg-slate-900/95 rounded-2xl shadow-soft border border-slate-200/80 dark:border-slate-800 transition-all duration-200;
   }
 
   .card-hover {
@@ -61,7 +65,7 @@
   }
 
   .user-card {
-    @apply animate-enter rounded-2xl border border-slate-200/80 bg-white p-5 shadow-soft transition-shadow duration-300 dark:border-slate-800 dark:bg-slate-900 sm:p-6;
+    @apply animate-enter rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-soft transition-all duration-300 hover:shadow-medium dark:border-slate-800 dark:bg-slate-900/95 sm:p-6;
   }
 
   .user-card-title {
@@ -69,7 +73,7 @@
   }
 
   .btn-primary {
-    @apply bg-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0;
+    @apply bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-md active:translate-y-0 dark:bg-indigo-500 dark:hover:bg-indigo-400;
   }
 
   .btn-secondary {
@@ -89,7 +93,7 @@
   }
 
   .input {
-    @apply w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-all duration-200;
+    @apply w-full px-4 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 bg-white dark:bg-slate-900 text-slate-900 dark:text-white transition-all duration-200;
   }
 
   .input-error {
@@ -225,4 +229,16 @@
 
 .container-custom {
   @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.premium-page {
+  @apply animate-fade-in;
+}
+
+.premium-section-title {
+  @apply text-2xl font-bold text-slate-950 dark:text-white sm:text-3xl;
+}
+
+.premium-kicker {
+  @apply mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-indigo-600 dark:text-indigo-300;
 }

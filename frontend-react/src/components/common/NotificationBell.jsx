@@ -57,7 +57,7 @@ function NotificationBell() {
     };
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative z-50" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
@@ -74,7 +74,7 @@ function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-96 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:max-w-md md:w-96 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 z-50 max-h-[80vh] overflow-hidden">
                     {/* Header */}
                     <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/50">
                         <h3 className="font-semibold text-gray-900 dark:text-white">Notifications</h3>

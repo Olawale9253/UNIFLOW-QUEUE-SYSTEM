@@ -24,7 +24,7 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
     };
 
     return (
-        <header className="sticky top-0 z-30 border-b border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:px-6 lg:px-8 lg:rounded-bl-3xl">
+        <header className="sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 sm:px-6 lg:px-8 lg:rounded-bl-3xl">
             <div className="flex min-h-14 items-center justify-between gap-4">
                 <div className="flex min-w-0 items-center gap-3">
                     <button
@@ -38,8 +38,8 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
                         </svg>
                     </button>
                     <div className="min-w-0">
-                        <p className="greeting-text truncate text-[10px] font-semibold uppercase tracking-widest text-blue-600 sm:text-xs">{workspace}</p>
-                        <h1 className="greeting-text truncate text-lg font-bold text-black dark:text-white sm:text-xl">{getGreeting()}, {getFirstName()}</h1>
+                        <p className="greeting-text truncate text-[10px] font-bold uppercase tracking-[0.18em] text-indigo-600 sm:text-xs dark:text-indigo-300">{workspace}</p>
+                        <h1 className="greeting-text truncate text-lg font-bold text-slate-950 dark:text-white sm:text-xl">{getGreeting()}, {getFirstName()}</h1>
                         <p className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">{subtitle}</p>
                     </div>
                 </div>
