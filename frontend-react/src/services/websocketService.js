@@ -13,7 +13,8 @@ class WebSocketService {
             return;
         }
 
-        const wsUrl = process.env.REACT_APP_WEBSOCKET_URL || 'http://localhost:8081/api/ws';
+        const wsUrl = process.env.REACT_APP_WEBSOCKET_URL
+            || (process.env.REACT_APP_API_URL ? `${process.env.REACT_APP_API_URL.replace(/\/api$/, '')}/api/ws` : 'http://localhost:8081/api/ws');
         console.log('Connecting to WebSocket at:', wsUrl);
 
         // Use SockJS for better compatibility

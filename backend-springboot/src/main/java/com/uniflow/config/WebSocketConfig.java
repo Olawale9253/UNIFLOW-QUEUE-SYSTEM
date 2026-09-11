@@ -15,7 +15,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final QueueWebSocketHandler queueWebSocketHandler;
 
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+    @Value("${app.cors.allowed-origins:https://*.onrender.com,http://localhost:3000,http://127.0.0.1:3000}")
     private String allowedOrigins;
 
     public WebSocketConfig(QueueWebSocketHandler queueWebSocketHandler) {
@@ -26,7 +26,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         System.out.println("✅ WebSocketConfig is being loaded!");
         registry.addHandler(queueWebSocketHandler, "/ws")
-            .setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+            .setAllowedOriginPatterns(Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
                 .filter(origin -> !origin.isEmpty())
                 .toArray(String[]::new))
