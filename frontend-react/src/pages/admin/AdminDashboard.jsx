@@ -32,9 +32,14 @@ function AdminDashboard() {
     const formatTime = (timestamp) => {
         if (!timestamp) return 'Just now';
         try {
-            const date = new Date(timestamp);
+            const timestampValue = typeof timestamp === 'string' && !/[zZ]|[+-]\d{2}:?\d{2}$/.test(timestamp)
+                ? `${timestamp}Z`
+                : timestamp;
+            const date = new Date(timestampValue);
+            if (Number.isNaN(date.getTime())) return 'Just now';
             const now = new Date();
             const diffMs = now - date;
+            if (diffMs < 0) return 'Just now';
             const diffMins = Math.floor(diffMs / 60000);
             const diffHours = Math.floor(diffMs / 3600000);
             const diffDays = Math.floor(diffMs / 86400000);
