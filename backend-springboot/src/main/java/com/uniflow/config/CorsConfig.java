@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Configuration
 public class CorsConfig {
 
-    @Value("${app.cors.allowed-origins:https://*.onrender.com,http://localhost:3000,http://127.0.0.1:3000}")
+    @Value("${app.cors.allowed-origins:https://uniflow-queue-system-1.onrender.com,https://uniflow-queue-system.onrender.com,http://localhost:3000,http://127.0.0.1:3000,https://*.onrender.com}")
     private String allowedOrigins;
 
     @Bean
@@ -27,8 +27,10 @@ public class CorsConfig {
                 .collect(Collectors.toList());
         config.setAllowCredentials(true);
         config.setAllowedOriginPatterns(patterns);
-        config.setAllowedHeaders(Arrays.asList("*"));
-        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With"));
+        config.setExposedHeaders(Arrays.asList("Authorization"));
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setMaxAge(3600L);
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);
     }
