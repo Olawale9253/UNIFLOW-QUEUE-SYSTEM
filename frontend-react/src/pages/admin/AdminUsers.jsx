@@ -53,16 +53,6 @@ function AdminUsers() {
         }
     };
 
-    const handleApproval = async (userId, approve) => {
-        try {
-            await api.put(`/users/${userId}/${approve ? 'approve' : 'reject'}`);
-            toast.success(approve ? 'Account approved' : 'Account rejected');
-            fetchUsers();
-        } catch (error) {
-            toast.error('Failed to update account approval');
-        }
-    };
-
     const filteredUsers = users.filter(user => {
         const matchesSearch = user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,20 +147,19 @@ function AdminUsers() {
                         user.active ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' :
                             'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300'
                     }`}>
-                      {!user.approved ? 'Pending approval' : user.active ? 'Active' : 'Inactive'}
+                      {user.active ? 'Active' : 'Inactive'}
                     </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                                     <button
-                                        onClick={() => !user.approved ? handleApproval(user.id, true) : handleToggleActive(user.id, user.active)}
+                                        onClick={() => handleToggleActive(user.id, user.active)}
                                         className={`px-3 py-1 rounded text-xs transition ${
-                                            !user.approved ? 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 hover:bg-green-200' : user.active ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200' :
+                                            user.active ? 'bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200' :
                                                 'bg-green-100 dark:bg-green-900/50 text-green-600 dark:text-green-400 hover:bg-green-200'
                                         }`}
                                     >
-                                        {!user.approved ? 'Approve' : user.active ? 'Deactivate' : 'Activate'}
+                                        {user.active ? 'Deactivate' : 'Activate'}
                                     </button>
-                                    {!user.approved && <button onClick={() => handleApproval(user.id, false)} className="ml-2 rounded bg-red-100 px-3 py-1 text-xs text-red-600 hover:bg-red-200">Reject</button>}
                                     <select
                                         value={user.role}
                                         onChange={(e) => handleRoleChange(user.id, e.target.value)}

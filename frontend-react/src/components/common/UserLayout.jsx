@@ -9,7 +9,7 @@ function UserLayout({ children, showSidebar = true }) {
     const { user, logout } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const menuItems = [
         { path: '/dashboard', label: 'Home' },
@@ -60,7 +60,7 @@ function UserLayout({ children, showSidebar = true }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
             {isSidebarOpen && <button className="fixed inset-0 z-30 bg-slate-950/40 lg:hidden" onClick={() => setIsSidebarOpen(false)} aria-label="Close student navigation" />}
-            <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-900 lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
+            <aside className={`fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-gray-200 bg-white shadow-xl transition-transform duration-300 ease-out dark:border-slate-800 dark:bg-slate-900 lg:translate-x-0 lg:shadow-none ${isSidebarOpen ? 'translate-x-0' : ''}`}>
                 <div className="flex min-h-0 flex-1 flex-col p-4">
                     <div className="mb-4 flex justify-end lg:hidden">
                         <button
@@ -127,7 +127,7 @@ function UserLayout({ children, showSidebar = true }) {
                 </div>
             </aside>
 
-            <div className={`min-w-0 transition-[margin] duration-300 ease-out ${isSidebarOpen ? 'lg:ml-64' : 'lg:ml-0'}`}>
+            <div className="min-w-0 lg:ml-64">
                 <GreetingHeader
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                     sidebarLabel="Toggle student navigation"

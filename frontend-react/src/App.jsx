@@ -33,7 +33,6 @@ import UserLayout from './components/common/UserLayout';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminUsers from './pages/admin/AdminUsers';
-import AdminRegistrationRequests from './pages/admin/AdminRegistrationRequests';
 import AdminOffices from './pages/admin/AdminOffices';
 import AdminStaff from './pages/admin/AdminStaff';
 import AdminAppointments from './pages/admin/AdminAppointments';
@@ -84,11 +83,6 @@ function App() {
                                         <Route path="/admin/users" element={
                                             <AdminRoute>
                                                 <AdminUsers />
-                                            </AdminRoute>
-                                        } />
-                                        <Route path="/admin/registration-requests" element={
-                                            <AdminRoute>
-                                                <AdminRegistrationRequests />
                                             </AdminRoute>
                                         } />
                                         <Route path="/admin/offices" element={

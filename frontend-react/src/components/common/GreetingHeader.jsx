@@ -41,10 +41,12 @@ function GreetingHeader({ onToggleSidebar, sidebarLabel, workspace, subtitle }) 
                         <p className="greeting-text truncate text-[10px] font-semibold uppercase tracking-widest text-blue-600 sm:text-xs">{workspace}</p>
                         <h1 className="greeting-text truncate text-lg font-bold text-black dark:text-white sm:text-xl">{getGreeting()}, {getFirstName()}</h1>
                         <p className="hidden truncate text-sm text-slate-600 dark:text-slate-300 sm:block">{subtitle}</p>
+                        <p className="max-w-[48vw] truncate text-xs text-slate-500 dark:text-slate-400 sm:hidden">{user?.email}</p>
                     </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                     <NotificationBell />
+                    <span className="hidden max-w-48 truncate text-xs text-slate-500 dark:text-slate-400 sm:block">{user?.email}</span>
                     <button
                         type="button"
                         onClick={() => navigate(user?.role === 'ADMIN' ? '/admin/profile' : user?.role === 'STAFF' ? '/staff/profile' : '/profile')}

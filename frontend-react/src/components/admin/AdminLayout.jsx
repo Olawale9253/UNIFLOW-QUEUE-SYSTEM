@@ -27,7 +27,6 @@ function AdminLayout({ children }) {
     const menuItems = [
         { path: '/admin', label: 'Home', icon: 'dashboard' },
         { path: '/admin/users', label: 'User Management', icon: 'students' },
-        { path: '/admin/registration-requests', label: 'New User Request', icon: 'requests' },
         { path: '/admin/offices', label: 'Offices', icon: 'offices' },
         { path: '/admin/staff', label: 'Staff', icon: 'staff' },
         { path: '/admin/appointments', label: 'Appointments', icon: 'appointments' },

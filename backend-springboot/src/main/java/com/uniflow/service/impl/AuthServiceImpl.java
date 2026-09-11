@@ -58,7 +58,7 @@ public class AuthServiceImpl implements AuthService {
 
         user.setRole("STUDENT");
         user.setActive(true);
-        user.setApproved(false);
+        user.setApproved(true);
 
         User savedUser = userRepository.save(user);
 
@@ -83,10 +83,6 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
-
-        if (!user.isApproved()) {
-            throw new UnauthorizedException("Your account is awaiting admin approval");
-        }
 
         if (!user.isActive()) {
             throw new UnauthorizedException("Account is deactivated");

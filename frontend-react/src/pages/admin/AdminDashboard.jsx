@@ -258,7 +258,6 @@ function AdminDashboard() {
                     <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Keep today&apos;s requests and appointments moving.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                    <Link to="/admin/registration-requests" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Review new user requests</Link>
                     <Link to="/admin/appointments" className="rounded-lg border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100 dark:border-blue-800 dark:bg-slate-900 dark:text-blue-300 dark:hover:bg-blue-900/40">Manage appointments</Link>
                 </div>
             </div>
