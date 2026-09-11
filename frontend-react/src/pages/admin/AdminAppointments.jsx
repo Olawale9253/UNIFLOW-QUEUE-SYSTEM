@@ -3,8 +3,10 @@ import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
 import ErrorState from '../../components/common/ErrorState';
+import { useWebSocket } from '../../context/WebSocketContext';
 
 function AdminAppointments() {
+    const { appointmentUpdateVersion } = useWebSocket();
     const [appointments, setAppointments] = useState([]);
     const [offices, setOffices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -26,7 +28,7 @@ function AdminAppointments() {
             clearInterval(interval);
             window.removeEventListener('focus', refreshOnFocus);
         };
-    }, []);
+    }, [appointmentUpdateVersion]);
 
     const fetchData = async () => {
         setError('');

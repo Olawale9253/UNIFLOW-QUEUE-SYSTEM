@@ -12,6 +12,7 @@ export function WebSocketProvider({ children }) {
     const [connected, setConnected] = useState(false);
     const [queueEvents, setQueueEvents] = useState([]);
     const [queueUpdateVersion, setQueueUpdateVersion] = useState(0);
+    const [appointmentUpdateVersion, setAppointmentUpdateVersion] = useState(0);
     const [notifications, setNotifications] = useState([]);
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -32,6 +33,9 @@ export function WebSocketProvider({ children }) {
             setQueueEvents(previous => [event, ...previous].slice(0, 50));
             setQueueUpdateVersion(previous => previous + 1);
         });
+        const removeAppointmentListener = websocketService.on('appointment-update', () => {
+            setAppointmentUpdateVersion(previous => previous + 1);
+        });
 
         const interval = setInterval(() => {
             fetchUpdates();
@@ -44,6 +48,7 @@ export function WebSocketProvider({ children }) {
             removeConnectListener();
             removeDisconnectListener();
             removeQueueListener();
+            removeAppointmentListener();
             websocketService.disconnect();
         };
     }, [user]);
@@ -86,6 +91,7 @@ export function WebSocketProvider({ children }) {
             connected,
             queueEvents,
             queueUpdateVersion,
+            appointmentUpdateVersion,
             notifications,
             unreadCount,
             markAllAsRead,

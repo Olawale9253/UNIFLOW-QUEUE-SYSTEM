@@ -11,7 +11,7 @@ import { useWebSocket } from '../../context/WebSocketContext';
 function AdminDashboard() {
     const { user } = useAuth();
     const { branding } = useBranding();
-    const { queueUpdateVersion } = useWebSocket();
+    const { queueUpdateVersion, appointmentUpdateVersion } = useWebSocket();
     const [stats, setStats] = useState({
         totalStudents: 0,
         totalAppointments: 0,
@@ -164,7 +164,7 @@ function AdminDashboard() {
             }
             setIsPolling(false);
         }
-    }, [queueUpdateVersion]);
+    }, [queueUpdateVersion, appointmentUpdateVersion]);
 
     // Initial load
     useEffect(() => {

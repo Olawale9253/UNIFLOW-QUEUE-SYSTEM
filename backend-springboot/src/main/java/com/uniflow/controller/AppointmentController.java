@@ -7,6 +7,7 @@ import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.AppointmentService;
 import com.uniflow.service.SystemSettingsService;
+import com.uniflow.websocket.QueueWebSocketHandler;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/appointments")
@@ -26,13 +28,16 @@ public class AppointmentController {
     private final AppointmentService appointmentService;
     private final ActivityLogService activityLogService;
     private final SystemSettingsService systemSettingsService;
+    private final QueueWebSocketHandler webSocketHandler;
 
     public AppointmentController(AppointmentService appointmentService,
                                  ActivityLogService activityLogService,
-                                 SystemSettingsService systemSettingsService) {
+                                 SystemSettingsService systemSettingsService,
+                                 QueueWebSocketHandler webSocketHandler) {
         this.appointmentService = appointmentService;
         this.activityLogService = activityLogService;
         this.systemSettingsService = systemSettingsService;
+        this.webSocketHandler = webSocketHandler;
     }
 
     @PostMapping("/book")
@@ -96,6 +101,7 @@ public class AppointmentController {
         }
         AppointmentResponse response = appointmentService.confirmAppointment(appointmentId);
         activityLogService.logActivity(userDetails.getFullName(), "Confirmed appointment: " + response.getReferenceNumber(), "appointment");
+        broadcastAppointmentUpdate(response);
         return ResponseEntity.ok(response);
     }
 
@@ -106,6 +112,7 @@ public class AppointmentController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         AppointmentResponse response = appointmentService.completeAppointment(appointmentId);
         activityLogService.logActivity(userDetails.getFullName(), "Completed appointment: " + response.getReferenceNumber(), "appointment");
+        broadcastAppointmentUpdate(response);
         return ResponseEntity.ok(response);
     }
 
@@ -116,6 +123,7 @@ public class AppointmentController {
             @AuthenticationPrincipal CustomUserDetails userDetails) {
         AppointmentResponse response = appointmentService.cancelAppointmentByStaff(appointmentId);
         activityLogService.logActivity(userDetails.getFullName(), "Cancelled appointment: " + response.getReferenceNumber(), "appointment");
+        broadcastAppointmentUpdate(response);
         return ResponseEntity.ok(response);
     }
 
@@ -168,5 +176,13 @@ public class AppointmentController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<LocalDateTime> slots = appointmentService.getAvailableSlots(officeId, date);
         return ResponseEntity.ok(slots);
+    }
+
+    private void broadcastAppointmentUpdate(AppointmentResponse response) {
+        webSocketHandler.broadcast(Map.of(
+                "event", "appointment-update",
+                "appointmentId", response.getId(),
+                "status", response.getStatus()
+        ));
     }
 }
