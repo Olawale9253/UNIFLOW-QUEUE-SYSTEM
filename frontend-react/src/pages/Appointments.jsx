@@ -27,8 +27,8 @@ function Appointments() {
         const dateStr = tomorrow.toISOString().split('T')[0];
         setSelectedDate(dateStr);
         fetchData();
-        const interval = setInterval(fetchData, 3000);
-        const refreshOnFocus = () => fetchData();
+        const interval = setInterval(() => fetchData(true), 10000);
+        const refreshOnFocus = () => fetchData(true);
         window.addEventListener('focus', refreshOnFocus);
         return () => {
             clearInterval(interval);
@@ -36,8 +36,8 @@ function Appointments() {
         };
     }, []);
 
-    const fetchData = async () => {
-        setLoading(true);
+    const fetchData = async (silent = false) => {
+        if (!silent) setLoading(true);
         setError('');
         try {
             const [appointmentsRes, officesRes, queuesRes] = await Promise.all([
@@ -61,7 +61,7 @@ function Appointments() {
             setError(error.response?.data?.message || 'We could not load your appointments right now.');
             toast.error('Failed to load data');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
