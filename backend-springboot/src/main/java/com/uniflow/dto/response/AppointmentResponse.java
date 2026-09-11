@@ -4,7 +4,9 @@ import java.time.LocalDateTime;
 
 public class AppointmentResponse {
     private Long id;
+    private Long officeId;
     private String officeName;
+    private String studentName;
     private String serviceName;
     private LocalDateTime appointmentTime;
     private String status;
@@ -16,11 +18,13 @@ public class AppointmentResponse {
     public AppointmentResponse() {}
 
     // Parameterized constructor
-    public AppointmentResponse(Long id, String officeName, String serviceName,
+    public AppointmentResponse(Long id, Long officeId, String officeName, String studentName, String serviceName,
                                LocalDateTime appointmentTime, String status,
                                String referenceNumber, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
+        this.officeId = officeId;
         this.officeName = officeName;
+        this.studentName = studentName;
         this.serviceName = serviceName;
         this.appointmentTime = appointmentTime;
         this.status = status;
@@ -33,8 +37,14 @@ public class AppointmentResponse {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public Long getOfficeId() { return officeId; }
+    public void setOfficeId(Long officeId) { this.officeId = officeId; }
+
     public String getOfficeName() { return officeName; }
     public void setOfficeName(String officeName) { this.officeName = officeName; }
+
+    public String getStudentName() { return studentName; }
+    public void setStudentName(String studentName) { this.studentName = studentName; }
 
     public String getServiceName() { return serviceName; }
     public void setServiceName(String serviceName) { this.serviceName = serviceName; }

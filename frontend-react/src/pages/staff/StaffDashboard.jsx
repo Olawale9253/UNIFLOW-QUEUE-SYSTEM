@@ -20,7 +20,7 @@ function StaffDashboard() {
 
     useEffect(() => {
         fetchDashboardData();
-        const interval = setInterval(fetchDashboardData, 10000);
+        const interval = setInterval(fetchDashboardData, 3000);
 
         return () => clearInterval(interval);
     }, [queueUpdateVersion]);

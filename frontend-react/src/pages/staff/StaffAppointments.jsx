@@ -34,18 +34,23 @@ function StaffAppointments() {
     }, []);
 
     useEffect(() => {
-        loadAppointments();
         if (!officeId) return undefined;
 
-        const interval = setInterval(loadAppointments, 10000);
-        return () => clearInterval(interval);
+        loadAppointments(officeId);
+        const interval = setInterval(() => loadAppointments(officeId), 3000);
+        const refreshOnFocus = () => loadAppointments(officeId);
+        window.addEventListener('focus', refreshOnFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', refreshOnFocus);
+        };
     }, [officeId]);
 
     const updateAppointment = async (id, action, method = 'put') => {
         try {
             await api[method](`/appointments/${id}/${action}`);
             toast.success(`Appointment ${action === 'staff-cancel' ? 'cancelled' : action + 'd'}`);
-            loadAppointments();
+            await loadAppointments(officeId);
         } catch (error) {
             toast.error(error.response?.data?.message || 'Unable to update appointment');
         }

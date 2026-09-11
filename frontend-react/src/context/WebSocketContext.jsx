@@ -35,7 +35,7 @@ export function WebSocketProvider({ children }) {
 
         const interval = setInterval(() => {
             fetchUpdates();
-        }, 10000);
+        }, 3000);
 
         fetchUpdates();
 

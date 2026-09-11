@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -49,6 +49,36 @@ import StaffProfile from './pages/staff/StaffProfile';
 import StaffSettings from './pages/staff/StaffSettings';
 import StaffActivityLog from './pages/staff/StaffActivityLog';
 
+function PageTitle() {
+    const location = useLocation();
+    const { user } = useAuth();
+    const { branding } = useBranding();
+    const { unreadCount } = useWebSocket();
+
+    useEffect(() => {
+        const pageNames = {
+            '/admin': 'Admin Dashboard',
+            '/admin/appointments': 'Manage Appointments',
+            '/admin/activities': 'Activity Log',
+            '/staff': 'Staff Dashboard',
+            '/staff/appointments': 'Staff Appointments',
+            '/appointments': 'My Appointments',
+            '/dashboard': 'Dashboard',
+            '/queue': 'My Queue',
+            '/documents': 'My Documents',
+            '/history': 'History',
+            '/profile': 'Profile',
+            '/settings': 'Settings'
+        };
+        const pageName = pageNames[location.pathname] || 'Queue System';
+        const applicationName = branding.schoolName || 'UniFlow Queue System';
+        const activityPrefix = unreadCount > 0 ? `(${unreadCount}) ` : '';
+        document.title = `${activityPrefix}${pageName} | ${applicationName}`;
+    }, [branding.schoolName, location.pathname, unreadCount, user?.role]);
+
+    return null;
+}
+
 function App() {
     return (
         <Router>
@@ -57,6 +87,7 @@ function App() {
                     <AdminProvider>
                         <WebSocketProvider>
                             <BrandingProvider>
+                                <PageTitle />
                                 <div className="min-h-screen transition-colors duration-300">
                                     <main>
                                     <AppErrorBoundary>

@@ -27,6 +27,13 @@ function Appointments() {
         const dateStr = tomorrow.toISOString().split('T')[0];
         setSelectedDate(dateStr);
         fetchData();
+        const interval = setInterval(fetchData, 3000);
+        const refreshOnFocus = () => fetchData();
+        window.addEventListener('focus', refreshOnFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', refreshOnFocus);
+        };
     }, []);
 
     const fetchData = async () => {

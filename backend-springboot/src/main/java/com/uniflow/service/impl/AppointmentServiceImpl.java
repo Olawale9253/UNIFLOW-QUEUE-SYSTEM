@@ -306,7 +306,9 @@ public class AppointmentServiceImpl implements AppointmentService {
     private AppointmentResponse mapToAppointmentResponse(Appointment appointment) {
         return new AppointmentResponse(
                 appointment.getId(),
+            appointment.getOffice().getId(),
                 appointment.getOffice().getName(),
+            appointment.getStudent().getFullName(),
                 appointment.getService() != null ? appointment.getService().getName() : "N/A",
                 appointment.getAppointmentTime(),
                 appointment.getStatus(),

@@ -20,8 +20,13 @@ function AdminAppointments() {
 
     useEffect(() => {
         fetchData();
-        const interval = setInterval(fetchData, 30000);
-        return () => clearInterval(interval);
+        const interval = setInterval(fetchData, 3000);
+        const refreshOnFocus = () => fetchData();
+        window.addEventListener('focus', refreshOnFocus);
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', refreshOnFocus);
+        };
     }, []);
 
     const fetchData = async () => {
@@ -55,7 +60,7 @@ function AdminAppointments() {
         try {
             await api.delete(`/appointments/${appointmentId}/staff-cancel`);
             toast.success('Appointment cancelled');
-            fetchData();
+            await fetchData();
         } catch (error) {
             toast.error('Failed to cancel appointment');
         }
@@ -65,7 +70,7 @@ function AdminAppointments() {
         try {
             await api.put(`/appointments/${appointmentId}/confirm`);
             toast.success('Appointment confirmed');
-            fetchData();
+            await fetchData();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to confirm appointment');
         }
