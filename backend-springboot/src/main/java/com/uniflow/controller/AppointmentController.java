@@ -2,6 +2,7 @@ package com.uniflow.controller;
 
 import com.uniflow.dto.request.AppointmentRequest;
 import com.uniflow.dto.response.AppointmentResponse;
+import com.uniflow.exception.BadRequestException;
 import com.uniflow.security.CustomUserDetails;
 import com.uniflow.service.ActivityLogService;
 import com.uniflow.service.AppointmentService;
@@ -87,6 +88,12 @@ public class AppointmentController {
     public ResponseEntity<AppointmentResponse> confirmAppointment(
             @PathVariable Long appointmentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        if ("STAFF".equals(userDetails.getRole())) {
+            AppointmentResponse appointment = appointmentService.getAppointment(appointmentId);
+            if (appointment.getAppointmentTime().isAfter(LocalDateTime.now())) {
+                throw new BadRequestException("Staff can confirm an appointment only at its scheduled time");
+            }
+        }
         AppointmentResponse response = appointmentService.confirmAppointment(appointmentId);
         activityLogService.logActivity(userDetails.getFullName(), "Confirmed appointment: " + response.getReferenceNumber(), "appointment");
         return ResponseEntity.ok(response);
