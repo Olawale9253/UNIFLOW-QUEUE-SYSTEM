@@ -15,7 +15,6 @@ import AdminRoute from './components/common/AdminRoute';
 import StaffRoute from './components/common/StaffRoute';
 
 // Pages
-import LandingPage from './pages/LandingPage';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -63,7 +62,7 @@ function App() {
                                     <AppErrorBoundary>
                                     <Routes>
                                         {/* Public Routes */}
-                                        <Route path="/" element={<LandingPage />} />
+                                        <Route path="/" element={<Navigate to="/login" replace />} />
                                         <Route path="/login" element={<Login />} />
                                         <Route path="/register" element={<Register />} />
                                         <Route path="/forgot-password" element={<ForgotPassword />} />
