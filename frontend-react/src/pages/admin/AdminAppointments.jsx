@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api/axiosConfig';
 import AdminLayout from '../../components/admin/AdminLayout';
 import toast from 'react-hot-toast';
-import { confirmAction } from '../../utils/notifications';
 import ErrorState from '../../components/common/ErrorState';
 
 function AdminAppointments() {
@@ -52,28 +51,6 @@ function AdminAppointments() {
             ...filters,
             [e.target.name]: e.target.value
         });
-    };
-
-    const handleCancelAppointment = async (appointmentId) => {
-        if (!(await confirmAction('Are you sure you want to cancel this appointment?'))) return;
-
-        try {
-            await api.delete(`/appointments/${appointmentId}/staff-cancel`);
-            toast.success('Appointment cancelled');
-            await fetchData();
-        } catch (error) {
-            toast.error('Failed to cancel appointment');
-        }
-    };
-
-    const handleConfirmAppointment = async (appointmentId) => {
-        try {
-            await api.put(`/appointments/${appointmentId}/confirm`);
-            toast.success('Appointment confirmed');
-            await fetchData();
-        } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to confirm appointment');
-        }
     };
 
     const filteredAppointments = appointments.filter(app => {
@@ -224,7 +201,6 @@ function AdminAppointments() {
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Service</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -249,24 +225,6 @@ function AdminAppointments() {
                     <span className={`px-2 py-1 rounded-full text-xs ${getStatusBadge(app.status)}`}>
                       {app.status || 'N/A'}
                     </span>
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                    {app.status !== 'CANCELLED' && app.status !== 'COMPLETED' && (
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => handleConfirmAppointment(app.id)}
-                                                className="text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-300"
-                                            >
-                                                ✓ Confirm
-                                            </button>
-                                            <button
-                                                onClick={() => handleCancelAppointment(app.id)}
-                                                className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                                            >
-                                                ✕ Cancel
-                                            </button>
-                                        </div>
-                                    )}
                                 </td>
                             </tr>
                         ))}
